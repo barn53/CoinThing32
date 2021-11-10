@@ -20,9 +20,11 @@ public:
         : m_guard(mutex)
     {
         xSemaphoreTake(m_guard, portMAX_DELAY);
+        TRC_I_PRINTF("  >>>>> take mutex %p\n", m_guard);
     }
     ~MutexGuard()
     {
+        TRC_I_PRINTF("  <<<<< give mutex %p\n", m_guard);
         xSemaphoreGive(m_guard);
     }
 
@@ -36,9 +38,11 @@ public:
         : m_guard(recursiveMutex)
     {
         xSemaphoreTakeRecursive(m_guard, portMAX_DELAY);
+        TRC_I_PRINTF(">>>>> take recursive mutex %p\n", m_guard);
     }
     ~RecursiveMutexGuard()
     {
+        TRC_I_PRINTF("<<<<< give recursive mutex %p\n", m_guard);
         xSemaphoreGiveRecursive(m_guard);
     }
 

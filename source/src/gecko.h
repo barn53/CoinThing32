@@ -20,17 +20,18 @@ public:
     void fetchAll();
     void clear();
 
+    const CoinData& getData(size_t index) const;
+    const SettingsCoins& getSettings() const;
+
 private:
     void fetchOne(const SettingsCoins::Coin& coin);
 
     SettingsCoins m_settings; // copy of the coins-part of settings
     std::map<String, CoinData> m_coin_data; // first: id, second: data
-
-    mutable SemaphoreHandle_t m_mutex;
 };
 
+extern SemaphoreHandle_t geckoDataMutex;
 extern Gecko gecko;
-
 extern TaskHandle_t geckoTaskHandle;
 
 void createGeckoTask();

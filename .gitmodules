@@ -1,0 +1,10 @@
+[submodule "source/lib/TFT_eSPI"]
+	path = source/lib/TFT_eSPI
+	url = git@github.com:barn53/TFT_eSPI.git
+	branch = master
+[submodule "source/lib/WiFiManager"]
+	path = source/lib/WiFiManager
+	url = git@github.com:barn53/WiFiManager.git
+[submodule "source/lib/esp_gen_qr"]
+	path = source/lib/esp_gen_qr
+	url = git@github.com:peteha99/esp_gen_qr.git

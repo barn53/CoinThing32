@@ -4,6 +4,7 @@
 namespace cointhing {
 
 extern SemaphoreHandle_t fetchSemaphore;
+extern SemaphoreHandle_t displaySemaphore;
 
 void createSemaphores();
 
