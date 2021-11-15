@@ -2,15 +2,19 @@
 
 namespace cointhing {
 
-SemaphoreHandle_t fetchSemaphore;
-SemaphoreHandle_t displaySemaphore;
+SemaphoreHandle_t fetchPriceSemaphore;
+SemaphoreHandle_t fetchChartSemaphore;
+SemaphoreHandle_t displayNextSemaphore;
+
+SemaphoreHandle_t dataMutex;
 
 void createSemaphores()
 {
-    fetchSemaphore = xSemaphoreCreateBinary();
-    xSemaphoreGive(fetchSemaphore);
+    fetchPriceSemaphore = xSemaphoreCreateBinary();
+    fetchChartSemaphore = xSemaphoreCreateBinary();
+    displayNextSemaphore = xSemaphoreCreateBinary();
 
-    displaySemaphore = xSemaphoreCreateBinary();
+    dataMutex = xSemaphoreCreateRecursiveMutex();
 }
 
 } // namespace cointhing

@@ -5,35 +5,40 @@
 
 namespace cointhing {
 
-struct CoinData {
-    float m_price { 0. }; // price 1st currency
-    float m_price_2nd { 0. }; // price 2nd currency
-    float m_market_cap { 0. }; // market capitalization 1st currency
-    std::vector<float> m_chart; // chart values
-};
-
 class Gecko {
 public:
+    struct CoinPrices {
+        float priceCurrency1;
+        float priceCurrency2;
+        float change24hCurrency1;
+        float change24hCurrency2;
+        float volume24hCurrency1;
+        float volume24hCurrency2;
+        float marketCapCurrency1;
+        float marketCapCurrency2;
+    };
+
     Gecko();
 
-    void set(const Settings& settings);
-    void fetchAll();
-    void clear();
+    void fetchPrices();
+    void fetchCharts();
+    bool valid() const;
 
-    const CoinData& getData(size_t index) const;
-    const SettingsCoins& getSettings() const;
+    const std::vector<CoinPrices>& getValues() const { return m_prices; }
+    const std::map<String, std::vector<float>>& getChartData() const { return m_chart_data; }
+    const SettingsData& getSettings() const { return m_settings; }
 
 private:
-    void fetchOne(const SettingsCoins::Coin& coin);
-
-    SettingsCoins m_settings; // copy of the coins-part of settings
-    std::map<String, CoinData> m_coin_data; // first: id, second: data
+    // These settings and values are consistent when synchronized with dataMutex
+    SettingsData m_settings;
+    std::vector<CoinPrices> m_prices;
+    std::map<String, std::vector<float>> m_chart_data;
 };
 
-extern SemaphoreHandle_t geckoDataMutex;
 extern Gecko gecko;
-extern TaskHandle_t geckoTaskHandle;
+extern TaskHandle_t geckoPriceTaskHandle;
+extern TaskHandle_t geckoChartTaskHandle;
 
-void createGeckoTask();
+void createGeckoTasks();
 
 } // namespace cointhing

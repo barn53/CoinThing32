@@ -3,7 +3,9 @@
 
 namespace cointhing {
 
-extern TimerHandle_t fetchTimer;
+extern TimerHandle_t fetchPriceTimer;
+extern TimerHandle_t fetchChartTimer;
+extern TimerHandle_t displayNextTimer;
 
 void createTimers();
 

@@ -7,7 +7,13 @@ class Display {
 public:
     Display();
 
-    void show();
+    void show(bool next);
+    void clear();
+
+private:
+    void nextId();
+
+    uint32_t displayId;
 };
 
 extern TFT_eSPI tft;

@@ -6,6 +6,7 @@ namespace cointhing {
 
 HttpJson::HttpJson()
 {
+    m_mutex = xSemaphoreCreateRecursiveMutex();
     m_client.setInsecure();
     m_http.useHTTP10(true); // stream is only available with HTTP1.0 (no chunked transfer)
     m_http.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
@@ -22,6 +23,7 @@ bool HttpJson::read(const char* url, DynamicJsonDocument& jsonDoc)
 bool HttpJson::read(const char* url, DynamicJsonDocument& jsonDoc, DynamicJsonDocument& jsonFilter)
 {
     TRC_I_FUNC
+    RecursiveMutexGuard guard(m_mutex);
     m_http.begin(m_client, url);
     int httpCode = m_http.GET();
     if (httpCode > 0) {

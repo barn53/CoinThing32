@@ -3,15 +3,26 @@
 
 namespace cointhing {
 
-TimerHandle_t fetchTimer;
+TimerHandle_t fetchPriceTimer;
+TimerHandle_t fetchChartTimer;
+TimerHandle_t displayNextTimer;
 
 void createTimers()
 {
-    fetchTimer = xTimerCreate("readTask", 10000 / portTICK_PERIOD_MS, pdTRUE, nullptr, [](TimerHandle_t xTimer) {
-        xSemaphoreGive(fetchSemaphore);
+    fetchPriceTimer = xTimerCreate("fetchPriceTimer", (20 * 1000) / portTICK_PERIOD_MS, pdTRUE, nullptr, [](TimerHandle_t xTimer) {
+        xSemaphoreGive(fetchPriceSemaphore);
     });
+    xTimerStart(fetchPriceTimer, 0);
 
-    xTimerStart(fetchTimer, 0);
+    fetchChartTimer = xTimerCreate("fetchChartTimer", (15 * 60 * 1000) / portTICK_PERIOD_MS, pdTRUE, nullptr, [](TimerHandle_t xTimer) {
+        xSemaphoreGive(fetchChartSemaphore);
+    });
+    xTimerStart(fetchChartTimer, 0);
+
+    displayNextTimer = xTimerCreate("displayNextTimer", (2 * 1000) / portTICK_PERIOD_MS, pdTRUE, nullptr, [](TimerHandle_t xTimer) {
+        xSemaphoreGive(displayNextSemaphore);
+    });
+    xTimerStart(displayNextTimer, 0);
 }
 
 } // namespace cointhing

@@ -5,6 +5,7 @@
 namespace cointhing {
 
 extern WebServer server;
+extern TaskHandle_t serverTaskHandle;
 
 void createServerTask();
 

@@ -29,7 +29,7 @@ void createServerTask()
     xTaskCreate(
         serverTask, /* Task function. */
         "serverTask", /* name of task. */
-        10000, /* Stack size of task */
+        TASK_STACK_SIZE, /* Stack size of task */
         nullptr, /* parameter of the task */
         0, /* priority of the task */
         &serverTaskHandle /* Task handle to keep track of created task */);

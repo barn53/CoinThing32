@@ -16,6 +16,7 @@ public:
 private:
     WiFiClientSecure m_client;
     HTTPClient m_http;
+    mutable SemaphoreHandle_t m_mutex;
 };
 
 extern HttpJson httpJson;
