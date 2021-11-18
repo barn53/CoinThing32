@@ -2,6 +2,7 @@
 #include "events.h"
 #include "gecko.h"
 #include "main.h"
+#include "settings.h"
 #include "tasks.h"
 
 #include <ArduinoJson.h>
@@ -19,69 +20,82 @@ void Display::clear() const
 
 void Display::resetCoinId()
 {
-    RecursiveMutexGuard guard(coinsMutex);
-    displayCoinIndex = 0;
+    m_display_coin_index = 0;
 }
 
 void Display::nextCoinId()
 {
-    RecursiveMutexGuard guard(coinsMutex);
-    ++displayCoinIndex;
-    if (displayCoinIndex >= gecko.getCoinPrices().size()) {
-        displayCoinIndex = 0;
+    ++m_display_coin_index;
+    if (m_display_coin_index >= gecko.getCoinPrices().size()) {
+        m_display_coin_index = 0;
     }
 }
 
 void Display::show() const
 {
     TRC_I_FUNC
-    RecursiveMutexGuard guard(coinsMutex);
     if (!gecko.valid()) {
+        m_clear_on_show = true;
         return;
     }
 
+    if (m_clear_on_show) {
+        clear();
+        m_clear_on_show = false;
+    }
+
+    TRC_I_PRINTF("Show coin ID: %u\n", m_display_coin_index);
     for (const auto& c : gecko.getChartData()) {
         TRC_I_PRINTF("Coin: %s - values: %u\n", c.first.c_str(), c.second.size());
     }
 
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
     tft.setCursor(0, 10);
-
     tft.loadFont(F("NotoSans-Regular20"));
-    String msg(gecko.getSettings().name(displayCoinIndex));
+
+    const auto& settingsCoins(gecko.getSettingsCoins());
+    const auto& coinPrices(gecko.getCoinPrices()[m_display_coin_index]);
+
+    String msg(settingsCoins.name(m_display_coin_index));
     msg += ": ";
-    msg += gecko.getCoinPrices()[displayCoinIndex].priceCurrency1;
-    msg += gecko.getSettings().currency1Symbol();
+    msg += coinPrices.priceCurrency1;
+    msg += settingsCoins.currency1Symbol();
     tft.fillRect(tft.textWidth(msg) - 5, 10, 240 - (tft.textWidth(msg) - 5), 20, TFT_BLACK);
     tft.print(msg);
 
     tft.setCursor(0, 40);
     msg = "24h change: ";
-    msg += gecko.getCoinPrices()[displayCoinIndex].change24hCurrency1;
+    msg += coinPrices.change24hCurrency1;
     msg += "%";
     tft.fillRect(tft.textWidth(msg) - 5, 40, 240 - (tft.textWidth(msg) - 5), 20, TFT_BLACK);
     tft.print(msg);
 
     tft.setCursor(0, 70);
     msg = "Cap: ";
-    msg += gecko.getCoinPrices()[displayCoinIndex].marketCapCurrency1;
-    msg += gecko.getSettings().currency1Symbol();
+    msg += coinPrices.marketCapCurrency1;
+    msg += settingsCoins.currency1Symbol();
     tft.fillRect(tft.textWidth(msg) - 5, 70, 240 - (tft.textWidth(msg) - 5), 20, TFT_BLACK);
     tft.print(msg);
 
     tft.setCursor(0, 100);
     msg = "24h vol: ";
-    msg += gecko.getCoinPrices()[displayCoinIndex].volume24hCurrency1;
-    msg += gecko.getSettings().currency1Symbol();
+    msg += coinPrices.volume24hCurrency1;
+    msg += settingsCoins.currency1Symbol();
     tft.fillRect(tft.textWidth(msg) - 5, 100, 240 - (tft.textWidth(msg) - 5), 20, TFT_BLACK);
     tft.print(msg);
 
     tft.setCursor(0, 130);
-    msg = "chart: ";
-    for (const auto& cd : gecko.getChartData()) {
-        msg += cd.first;
-        msg += "\n";
-    }
+    msg = "charts: ";
+    msg += gecko.getChartData().size();
+    tft.fillRect(tft.textWidth(msg) - 5, 130, 240 - (tft.textWidth(msg) - 5), 20, TFT_BLACK);
+    tft.print(msg);
+
+    tft.setCursor(0, 160);
+    msg = "fetches\nprice: ";
+    msg += gecko.getCountPriceFetches();
+    msg += ", chart: ";
+    msg += gecko.getCountChartFetches();
+    tft.fillRect(tft.textWidth(msg) - 5, 160, 240 - (tft.textWidth(msg) - 5), 20, TFT_BLACK);
     tft.print(msg);
 
     tft.unloadFont();
@@ -97,8 +111,8 @@ void Display::showNewSettings() const
     String msg("New Settings");
     tft.print(msg);
     tft.unloadFont();
-    vTaskDelay(2000);
-    clear();
+    vTaskDelay(4000);
+    m_clear_on_show = true;
 }
 
 TFT_eSPI tft;
@@ -107,8 +121,14 @@ TaskHandle_t displayTaskHandle;
 
 void displayTask(void*)
 {
-    DisplayNotificationType notificationType;
 
+    tft.begin();
+    tft.setRotation(0); // 0 & 2 Portrait. 1 & 3 landscape
+    tft.setTextWrap(false);
+
+    display.clear();
+
+    DisplayNotificationType notificationType;
     while (true) {
         if (xTaskNotifyWait(0, 0xffffffff, reinterpret_cast<uint32_t*>(&notificationType), portMAX_DELAY)) {
             TRC_I_PRINTF("Notification type: %u\n", static_cast<uint32_t>(notificationType));
@@ -118,6 +138,7 @@ void displayTask(void*)
                 display.showNewSettings();
                 break;
             case DisplayNotificationType::showNextId:
+                RecursiveMutexGuard g(geckoSyncMutex);
                 display.show();
                 display.nextCoinId();
                 break;
@@ -128,12 +149,6 @@ void displayTask(void*)
 
 void createDisplayTask()
 {
-    tft.begin();
-    tft.setRotation(0); // 0 & 2 Portrait. 1 & 3 landscape
-    tft.setTextWrap(false);
-
-    display.clear();
-
     xTaskCreatePinnedToCore(
         displayTask, /* Task function. */
         "displayTask", /* name of task. */

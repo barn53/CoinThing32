@@ -4,9 +4,9 @@
 namespace cointhing {
 
 extern TaskHandle_t highWaterMarkTaskHandle;
-extern TaskHandle_t blinkyTaskHandle;
+extern TaskHandle_t heartbeatTaskHandle;
 
 void createHighWaterMarkTask();
-void createBlinkyTask();
+void createHeartbeatTask();
 
 } // namespace cointhing

@@ -22,7 +22,7 @@ Settings::Settings()
 void Settings::read()
 {
     TRC_I_FUNC
-    RecursiveMutexGuard guard(coinsMutex);
+    RecursiveMutexGuard g(coinsMutex);
     if (SPIFFS.exists(SETTINGS_FILE)) {
         File file;
         file = SPIFFS.open(SETTINGS_FILE, "r");
@@ -66,7 +66,7 @@ void Settings::set(const char* json)
 void Settings::set(DynamicJsonDocument& doc, bool toFile)
 {
     TRC_I_FUNC
-    RecursiveMutexGuard guard(coinsMutex);
+    RecursiveMutexGuard g(coinsMutex);
     m_coins.m_mode = static_cast<Mode>(doc[F("mode")] | static_cast<uint8_t>(Mode::ONE_COIN));
     m_coins.m_coins.clear();
     for (JsonObject elem : doc[F("coins")].as<JsonArray>()) {
@@ -106,7 +106,7 @@ void Settings::set(DynamicJsonDocument& doc, bool toFile)
 void Settings::write() const
 {
     TRC_I_FUNC
-    RecursiveMutexGuard guard(coinsMutex);
+    RecursiveMutexGuard g(coinsMutex);
     File file = SPIFFS.open(SETTINGS_FILE, "w");
     if (file) {
         file.printf(R"({"mode":%u,)", static_cast<uint8_t>(m_coins.m_mode));
@@ -157,7 +157,7 @@ bool Settings::valid() const
 void Settings::trace() const
 {
 #if SERIAL_TRACE___ > 0
-    RecursiveMutexGuard guard(coinsMutex);
+    RecursiveMutexGuard g(coinsMutex);
     TRC_I_PRINTF("Mode: >%u<\n", m_mode)
     TRC_I_PRINTLN("Coins:")
     for (const auto& c : m_coins) {
@@ -176,7 +176,7 @@ void Settings::trace() const
 void Settings::readBrightness()
 {
     TRC_I_FUNC
-    RecursiveMutexGuard guard(coinsMutex);
+    RecursiveMutexGuard g(coinsMutex);
     if (SPIFFS.exists(BRIGHTNESS_FILE)) {
         File file;
         file = SPIFFS.open(BRIGHTNESS_FILE, "r");
@@ -205,7 +205,7 @@ void Settings::readBrightness()
 void Settings::setBrightness(uint8_t b)
 {
     TRC_I_FUNC
-    RecursiveMutexGuard guard(coinsMutex);
+    RecursiveMutexGuard g(coinsMutex);
     if (b >= MIN_BRIGHTNESS
         && b <= std::numeric_limits<uint8_t>::max()) {
         m_coins.m_brightness = b;

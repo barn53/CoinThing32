@@ -20,14 +20,16 @@ void setup()
     Serial.begin(115200);
     SPIFFS.begin();
 
+    createEventLoop();
+    registerEventHandler();
+
     setupWiFi();
 
-    createGeckoTasks();
+    createGeckoTask();
     createDisplayTask();
     createHighWaterMarkTask();
-    createBlinkyTask();
+    createHeartbeatTask();
 
-    createEventLoop();
     createTimers();
 
     createServer();

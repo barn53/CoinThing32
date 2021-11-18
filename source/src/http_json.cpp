@@ -23,7 +23,7 @@ bool HttpJson::read(const char* url, DynamicJsonDocument& jsonDoc)
 bool HttpJson::read(const char* url, DynamicJsonDocument& jsonDoc, DynamicJsonDocument& jsonFilter)
 {
     TRC_I_FUNC
-    RecursiveMutexGuard guard(m_mutex);
+    RecursiveMutexGuard g(m_mutex);
     m_http.begin(m_client, url);
     int httpCode = m_http.GET();
     if (httpCode > 0) {

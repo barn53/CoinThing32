@@ -21,7 +21,8 @@ public:
     void showNewSettings() const;
 
 private:
-    uint32_t displayCoinIndex;
+    uint32_t m_display_coin_index;
+    mutable bool m_clear_on_show { false };
 };
 
 extern TFT_eSPI tft;

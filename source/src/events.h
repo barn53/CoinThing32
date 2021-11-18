@@ -15,5 +15,6 @@ extern int32_t eventIdAllChartsUpdated;
 extern int32_t eventIdSettingsChanged;
 
 void createEventLoop();
+void registerEventHandler();
 
 } // namespace cointhing

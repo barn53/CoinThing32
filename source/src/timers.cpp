@@ -13,12 +13,12 @@ void createTimers()
     fetchPriceTimer = xTimerCreate("fetchPriceTimer", (20 * 1000) / portTICK_PERIOD_MS, pdTRUE, nullptr, [](TimerHandle_t xTimer) {
         xTaskNotify(displayTaskHandle, static_cast<uint32_t>(GeckoNotificationType::fetchPrices), eSetValueWithOverwrite);
     });
-    // xTimerStart(fetchPriceTimer, 0);
+    xTimerStart(fetchPriceTimer, 0);
 
     fetchChartTimer = xTimerCreate("fetchChartTimer", (15 * 60 * 1000) / portTICK_PERIOD_MS, pdTRUE, nullptr, [](TimerHandle_t xTimer) {
         xTaskNotify(displayTaskHandle, static_cast<uint32_t>(GeckoNotificationType::fetchCharts), eSetValueWithOverwrite);
     });
-    // xTimerStart(fetchChartTimer, 0);
+    xTimerStart(fetchChartTimer, 0);
 
     displayNextTimer = xTimerCreate("displayNextTimer", (2 * 1000) / portTICK_PERIOD_MS, pdTRUE, nullptr, [](TimerHandle_t xTimer) {
         xTaskNotify(displayTaskHandle, static_cast<uint32_t>(DisplayNotificationType::showNextId), eSetValueWithOverwrite);

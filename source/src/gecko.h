@@ -1,6 +1,7 @@
 #pragma once
 #include "settings.h"
 #include <Arduino.h>
+#include <atomic>
 #include <map>
 
 namespace cointhing {
@@ -30,21 +31,33 @@ public:
     void fetchCharts();
     bool valid() const;
 
-    const std::vector<CoinPrices>& getCoinPrices() const { return m_prices; }
-    const std::map<String, std::vector<float>>& getChartData() const { return m_chart_data; }
-    const SettingsCoins& getSettings() const { return m_settings; }
+    const std::vector<CoinPrices>& getCoinPrices() const;
+    const std::map<String, std::vector<float>>& getChartData() const;
+
+    void newSettings();
+    const SettingsCoins& getSettingsCoins() const;
+
+    void cancel() const { m_cancel.store(true); }
+
+    uint32_t getCountPriceFetches() const { return m_count_price_fetches; };
+    uint32_t getCountChartFetches() const { return m_count_chart_fetches; };
 
 private:
-    // These settings and values are consistent when synchronized with dataMutex
-    SettingsCoins m_settings;
+    // These settings, prices and chart data are consistent
+    SettingsCoins m_settings_coins;
     std::vector<CoinPrices> m_prices;
     std::map<String, std::vector<float>> m_chart_data;
+
+    uint32_t m_count_price_fetches { 0 };
+    uint32_t m_count_chart_fetches { 0 };
+
+    mutable std::atomic_bool m_cancel { false };
 };
 
 extern Gecko gecko;
-
+extern SemaphoreHandle_t geckoSyncMutex;
 extern TaskHandle_t geckoTaskHandle;
 
-void createGeckoTasks();
+void createGeckoTask();
 
 } // namespace cointhing

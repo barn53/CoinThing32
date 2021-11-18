@@ -26,18 +26,22 @@ void createEventLoop()
     };
 
     esp_event_loop_create(&loopArgs, &loopHandle);
+}
 
+void registerEventHandler()
+{
     esp_event_handler_register_with(
         loopHandle, COINTHING_EVENT_BASE, ESP_EVENT_ANY_ID, [](void* event_handler_arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
             TRC_I_FUNC
-            TRC_I_PRINTF("Event: %u data: %s\n", event_id, (const char*)event_data);
+            TRC_I_PRINTF("Event: %s, id: %u data: %s\n", (const char*)event_base, event_id, (const char*)event_data);
         },
         nullptr);
 
     esp_event_handler_register_with(
         loopHandle, COINTHING_EVENT_BASE, eventIdSettingsChanged, [](void* event_handler_arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
-            xTaskNotify(displayTaskHandle, static_cast<uint32_t>(DisplayNotificationType::settingsChanged), eSetValueWithOverwrite);
+            gecko.cancel();
             xTaskNotify(geckoTaskHandle, static_cast<uint32_t>(GeckoNotificationType::settingsChanged), eSetValueWithOverwrite);
+            xTaskNotify(displayTaskHandle, static_cast<uint32_t>(DisplayNotificationType::settingsChanged), eSetValueWithOverwrite);
         },
         nullptr);
 }
