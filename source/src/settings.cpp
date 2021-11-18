@@ -1,6 +1,6 @@
 #include "settings.h"
 #include "events.h"
-#include "semaphores.h"
+#include "main.h"
 #include "trace.h"
 #include <StreamUtils.h>
 

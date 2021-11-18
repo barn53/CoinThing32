@@ -1,7 +1,7 @@
 #include "display.h"
 #include "events.h"
 #include "gecko.h"
-#include "semaphores.h"
+#include "main.h"
 #include "tasks.h"
 
 #include <ArduinoJson.h>
@@ -110,15 +110,6 @@ void displayTask(void*)
     DisplayNotificationType notificationType;
 
     while (true) {
-        // if (xSemaphoreTake(displayNextSemaphore, portMAX_DELAY)) {
-        //     display.show(true);
-        // }
-        // xSemaphoreTake(displayNextSemaphore, 0); // consume semaphore if given to avoid immediate rerun
-
-        // if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) {
-        //     display.show(true);
-        // }
-
         if (xTaskNotifyWait(0, 0xffffffff, reinterpret_cast<uint32_t*>(&notificationType), portMAX_DELAY)) {
             TRC_I_PRINTF("Notification type: %u\n", static_cast<uint32_t>(notificationType));
             switch (notificationType) {

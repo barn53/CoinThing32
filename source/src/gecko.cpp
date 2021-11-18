@@ -1,7 +1,7 @@
 #include "gecko.h"
 #include "events.h"
 #include "http_json.h"
-#include "semaphores.h"
+#include "main.h"
 #include "tasks.h"
 #include "utils.h"
 
@@ -126,23 +126,22 @@ void Gecko::fetchCharts()
 }
 
 Gecko gecko;
-TaskHandle_t geckoPriceTaskHandle;
-TaskHandle_t geckoChartTaskHandle;
+TaskHandle_t geckoTaskHandle;
 
-void geckoPriceTask(void*)
+void geckoTask(void*)
 {
-    while (true) {
-        if (xSemaphoreTake(fetchPriceSemaphore, portMAX_DELAY)) {
-            gecko.fetchPrices();
-        }
-    }
-}
+    GeckoNotificationType notificationType;
 
-void geckoChartTask(void*)
-{
     while (true) {
-        if (xSemaphoreTake(fetchChartSemaphore, portMAX_DELAY)) {
-            gecko.fetchCharts();
+
+        if (xTaskNotifyWait(0, 0xffffffff, reinterpret_cast<uint32_t*>(&notificationType), portMAX_DELAY)) {
+            TRC_I_PRINTF("Notification type: %u\n", static_cast<uint32_t>(notificationType));
+            switch (notificationType) {
+            case GeckoNotificationType::settingsChanged:
+                gecko.fetchPrices();
+                gecko.fetchCharts();
+                break;
+            }
         }
     }
 }
@@ -150,21 +149,12 @@ void geckoChartTask(void*)
 void createGeckoTasks()
 {
     xTaskCreatePinnedToCore(
-        geckoPriceTask, /* Task function. */
-        "geckoPriceTask", /* name of task. */
+        geckoTask, /* Task function. */
+        "geckoTask", /* name of task. */
         TASK_STACK_SIZE, /* Stack size of task */
         nullptr, /* parameter of the task */
         0, /* priority of the task */
-        &geckoPriceTaskHandle, /* Task handle to keep track of created task */
-        0);
-
-    xTaskCreatePinnedToCore(
-        geckoChartTask, /* Task function. */
-        "geckoChartTask", /* name of task. */
-        TASK_STACK_SIZE, /* Stack size of task */
-        nullptr, /* parameter of the task */
-        0, /* priority of the task */
-        &geckoChartTaskHandle, /* Task handle to keep track of created task */
+        &geckoTaskHandle, /* Task handle to keep track of created task */
         0);
 }
 

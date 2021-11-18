@@ -5,6 +5,12 @@
 
 namespace cointhing {
 
+enum class GeckoNotificationType : uint32_t {
+    settingsChanged,
+    fetchPrices,
+    fetchCharts,
+};
+
 class Gecko {
 public:
     struct CoinPrices {
@@ -37,8 +43,7 @@ private:
 
 extern Gecko gecko;
 
-extern TaskHandle_t geckoPriceTaskHandle;
-extern TaskHandle_t geckoChartTaskHandle;
+extern TaskHandle_t geckoTaskHandle;
 
 void createGeckoTasks();
 

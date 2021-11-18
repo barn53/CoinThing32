@@ -1,6 +1,6 @@
 #include "events.h"
 #include "display.h"
-#include "semaphores.h"
+#include "gecko.h"
 #include "trace.h"
 
 namespace cointhing {
@@ -37,8 +37,7 @@ void createEventLoop()
     esp_event_handler_register_with(
         loopHandle, COINTHING_EVENT_BASE, eventIdSettingsChanged, [](void* event_handler_arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
             xTaskNotify(displayTaskHandle, static_cast<uint32_t>(DisplayNotificationType::settingsChanged), eSetValueWithOverwrite);
-            xSemaphoreGive(fetchPriceSemaphore);
-            xSemaphoreGive(fetchChartSemaphore);
+            xTaskNotify(geckoTaskHandle, static_cast<uint32_t>(GeckoNotificationType::settingsChanged), eSetValueWithOverwrite);
         },
         nullptr);
 }

@@ -1,10 +1,12 @@
 #pragma once
 #include <Arduino.h>
 
-#define TASK_STACK_SIZE (8192)
-
 namespace cointhing {
 
-void createTasks();
+extern TaskHandle_t highWaterMarkTaskHandle;
+extern TaskHandle_t blinkyTaskHandle;
+
+void createHighWaterMarkTask();
+void createBlinkyTask();
 
 } // namespace cointhing

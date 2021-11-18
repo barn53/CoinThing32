@@ -1,6 +1,7 @@
 #include "tasks.h"
 #include "display.h"
 #include "gecko.h"
+#include "main.h"
 #include "web_server.h"
 
 namespace cointhing {
@@ -14,8 +15,7 @@ void createHighWaterMarkTask()
         [](void*) {
             while (true) {
                 TRC_I_PRINTF("displayTask hwm:       %u\n", uxTaskGetStackHighWaterMark(displayTaskHandle));
-                TRC_I_PRINTF("geckoPriceTask hwm:    %u\n", uxTaskGetStackHighWaterMark(geckoPriceTaskHandle));
-                TRC_I_PRINTF("geckoChartTask hwm:    %u\n", uxTaskGetStackHighWaterMark(geckoChartTaskHandle));
+                TRC_I_PRINTF("geckoChartTask hwm:    %u\n", uxTaskGetStackHighWaterMark(geckoTaskHandle));
                 TRC_I_PRINTF("highWaterMarkTask hwm: %u\n", uxTaskGetStackHighWaterMark(nullptr));
                 TRC_I_PRINTF("minimum free size:     %u\n", heap_caps_get_minimum_free_size(MALLOC_CAP_8BIT | MALLOC_CAP_32BIT));
                 vTaskDelay(5000);
@@ -43,15 +43,6 @@ void createBlinkyTask()
         nullptr, /* parameter of the task */
         0, /* priority of the task */
         &blinkyTaskHandle /* Task handle to keep track of created task */);
-}
-
-void createTasks()
-{
-    createGeckoTasks();
-    createDisplayTask();
-
-    createHighWaterMarkTask();
-    createBlinkyTask();
 }
 
 } // namespace cointhing
