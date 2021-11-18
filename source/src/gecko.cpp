@@ -2,9 +2,12 @@
 #include "events.h"
 #include "http_json.h"
 #include "semaphores.h"
+#include "tasks.h"
 #include "utils.h"
 
 #include <ArduinoJson.h>
+#include <algorithm>
+#include <set>
 
 namespace cointhing {
 
@@ -20,29 +23,30 @@ bool Gecko::valid() const
 void Gecko::fetchPrices()
 {
     TRC_I_FUNC
-    SettingsData tempSettings;
+    SettingsCoins tempCoins;
     {
-        RecursiveMutexGuard guard(dataMutex);
-        tempSettings = settings.data();
+        RecursiveMutexGuard guard(coinsMutex);
+        tempCoins = settings.coins();
     }
 
-    String currency1(tempSettings.currency1Lower());
-    String currency2(tempSettings.currency2Lower());
+    String currency1(tempCoins.currency1Lower());
+    String currency2(tempCoins.currency2Lower());
     String url(F("https://api.coingecko.com/api/v3/simple/price?include_24hr_change=true&include_market_cap=true&include_24hr_vol=true&vs_currencies="));
     url += currency1;
     url += F(",");
     url += currency2;
     url += F("&ids=");
-    for (const auto& coin : tempSettings.coins()) {
+    for (const auto& coin : tempCoins.coins()) {
         url += coin.id;
         url += F(",");
     }
+
     TRC_I_PRINTLN(url);
     DynamicJsonDocument doc(2048);
     std::vector<CoinPrices> tempValues;
 
     if (httpJson.read(url.c_str(), doc)) {
-        for (const auto& coin : tempSettings.coins()) {
+        for (const auto& coin : tempCoins.coins()) {
             CoinPrices coinValues;
             coinValues.priceCurrency1 = doc[coin.id][currency1] | std::numeric_limits<float>::infinity();
             coinValues.priceCurrency2 = doc[coin.id][currency2] | std::numeric_limits<float>::infinity();
@@ -56,8 +60,8 @@ void Gecko::fetchPrices()
         }
 
         {
-            RecursiveMutexGuard guard(dataMutex);
-            std::swap(m_settings, tempSettings);
+            RecursiveMutexGuard guard(coinsMutex);
+            std::swap(m_settings, tempCoins);
             m_prices.swap(tempValues);
             esp_event_post_to(loopHandle, COINTHING_EVENT_BASE, eventIdAllPricesUpdated, (void*)__PRETTY_FUNCTION__, strlen(__PRETTY_FUNCTION__) + 1, 0);
         }
@@ -69,38 +73,51 @@ void Gecko::fetchPrices()
 void Gecko::fetchCharts()
 {
     TRC_I_FUNC
-    SettingsData tempSettings;
+    SettingsCoins tempCoins;
     {
-        RecursiveMutexGuard guard(dataMutex);
-        tempSettings = settings.data();
+        RecursiveMutexGuard guard(coinsMutex);
+        tempCoins = settings.coins();
+
+        // All coin ids we currently have chart data for
+        std::set<String> chartIds;
+        for (const auto& cd : m_chart_data) {
+            chartIds.emplace(cd.first);
+        }
+        // All coin ids in the settings
+        std::set<String> tempIds;
+        for (const auto& c : tempCoins.coins()) {
+            tempIds.emplace(c.id);
+        }
+        std::vector<String> removeChart;
+        std::set_difference(chartIds.begin(), chartIds.end(), tempIds.begin(), tempIds.end(), std::back_inserter(removeChart));
+        for (const auto& r : removeChart) {
+            m_chart_data.erase(r);
+        }
     }
 
     DynamicJsonDocument filter(16);
     filter["prices"] = true;
     DynamicJsonDocument doc(12288);
-    std::vector<float> tempChartData;
 
-    String currency1(tempSettings.currency1Lower());
-    for (const auto& coin : tempSettings.coins()) {
+    String currency1(tempCoins.currency1Lower());
+    for (const auto& coin : tempCoins.coins()) {
         String url(F("https://api.coingecko.com/api/v3/coins/"));
         url += coin.id;
         url += F("/market_chart?vs_currency=");
         url += currency1;
-        url += F("&days=180&interval=daily");
+        url += F("&days=24&interval=daily");
         TRC_I_PRINTLN(url);
 
         if (httpJson.read(url.c_str(), doc)) {
-            tempChartData.clear();
-            JsonArray prices(doc["prices"]);
-            for (const auto& p : prices) {
-                tempChartData.push_back(p[1].as<float>());
+            JsonArray jPrices(doc["prices"]);
+            RecursiveMutexGuard guard(coinsMutex);
+            auto& chartData(m_chart_data[coin.id]);
+            chartData.clear();
+            chartData.reserve(jPrices.size());
+            for (const auto& p : jPrices) {
+                chartData.emplace_back(p[1].as<float>());
             }
-
-            {
-                RecursiveMutexGuard guard(dataMutex);
-                m_chart_data[coin.id].swap(tempChartData);
-                esp_event_post_to(loopHandle, COINTHING_EVENT_BASE, eventIdChartUpdated, (void*)coin.id.c_str(), coin.id.length() + 1, 0);
-            }
+            esp_event_post_to(loopHandle, COINTHING_EVENT_BASE, eventIdChartUpdated, (void*)coin.id.c_str(), coin.id.length() + 1, 0);
         } else {
             TRC_I_PRINTLN("HTTP read failed!");
         }
@@ -118,7 +135,6 @@ void geckoPriceTask(void*)
         if (xSemaphoreTake(fetchPriceSemaphore, portMAX_DELAY)) {
             gecko.fetchPrices();
         }
-        xSemaphoreTake(fetchPriceSemaphore, 0); // consume semaphore if given to avoid immediate rerun
     }
 }
 
@@ -128,27 +144,28 @@ void geckoChartTask(void*)
         if (xSemaphoreTake(fetchChartSemaphore, portMAX_DELAY)) {
             gecko.fetchCharts();
         }
-        xSemaphoreTake(fetchChartSemaphore, 0); // consume semaphore if given to avoid immediate rerun
     }
 }
 
 void createGeckoTasks()
 {
-    xTaskCreate(
+    xTaskCreatePinnedToCore(
         geckoPriceTask, /* Task function. */
         "geckoPriceTask", /* name of task. */
         TASK_STACK_SIZE, /* Stack size of task */
         nullptr, /* parameter of the task */
         0, /* priority of the task */
-        &geckoPriceTaskHandle /* Task handle to keep track of created task */);
+        &geckoPriceTaskHandle, /* Task handle to keep track of created task */
+        0);
 
-    xTaskCreate(
+    xTaskCreatePinnedToCore(
         geckoChartTask, /* Task function. */
         "geckoChartTask", /* name of task. */
         TASK_STACK_SIZE, /* Stack size of task */
         nullptr, /* parameter of the task */
         0, /* priority of the task */
-        &geckoChartTaskHandle /* Task handle to keep track of created task */);
+        &geckoChartTaskHandle, /* Task handle to keep track of created task */
+        0);
 }
 
 } // namespace cointhing

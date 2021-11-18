@@ -1,6 +1,7 @@
 #include "settings.h"
 #include "events.h"
 #include "semaphores.h"
+#include "trace.h"
 #include <StreamUtils.h>
 
 #include <FS.h>
@@ -12,9 +13,6 @@ using File = fs::File;
 #define JSON_DOCUMENT_CONFIG_SIZE 1536
 #define JSON_DOCUMENT_BRIGHTNESS_SIZE 32
 
-#define SETTINGS_FILE "/settings.json"
-#define BRIGHTNESS_FILE "/brightness.json"
-
 namespace cointhing {
 
 Settings::Settings()
@@ -24,7 +22,7 @@ Settings::Settings()
 void Settings::read()
 {
     TRC_I_FUNC
-    RecursiveMutexGuard guard(dataMutex);
+    RecursiveMutexGuard guard(coinsMutex);
     if (SPIFFS.exists(SETTINGS_FILE)) {
         File file;
         file = SPIFFS.open(SETTINGS_FILE, "r");
@@ -33,7 +31,7 @@ void Settings::read()
             DynamicJsonDocument doc(JSON_DOCUMENT_CONFIG_SIZE);
             ReadBufferingStream bufferedFile { file, 64 };
 
-#if COIN_THING_SERIAL > 0
+#if SERIAL_TRACE > 0
             ReadLoggingStream loggingStream(bufferedFile, Serial);
             DeserializationError error = deserializeJson(doc, loggingStream);
 #else
@@ -68,15 +66,15 @@ void Settings::set(const char* json)
 void Settings::set(DynamicJsonDocument& doc, bool toFile)
 {
     TRC_I_FUNC
-    RecursiveMutexGuard guard(dataMutex);
-    m_data.m_mode = static_cast<Mode>(doc[F("mode")] | static_cast<uint8_t>(Mode::ONE_COIN));
-    m_data.m_coins.clear();
+    RecursiveMutexGuard guard(coinsMutex);
+    m_coins.m_mode = static_cast<Mode>(doc[F("mode")] | static_cast<uint8_t>(Mode::ONE_COIN));
+    m_coins.m_coins.clear();
     for (JsonObject elem : doc[F("coins")].as<JsonArray>()) {
         Coin c;
         c.id = elem[F("id")] | "";
         c.symbol = elem[F("symbol")] | "";
         c.name = elem[F("name")] | "";
-        m_data.m_coins.emplace_back(c);
+        m_coins.m_coins.emplace_back(c);
     }
 
     size_t ii(0);
@@ -84,18 +82,18 @@ void Settings::set(DynamicJsonDocument& doc, bool toFile)
         Currency c;
         c.currency = elem[F("currency")] | "";
         c.symbol = elem[F("symbol")] | c.currency;
-        m_data.m_currencies[ii] = c;
+        m_coins.m_currencies[ii] = c;
         ++ii;
-        if (ii >= m_data.m_currencies.size()) {
+        if (ii >= m_coins.m_currencies.size()) {
             break;
         }
     }
 
-    m_data.m_number_format = static_cast<NumberFormat>(doc[F("number_format")] | static_cast<uint8_t>(NumberFormat::DECIMAL_DOT));
-    m_data.m_chart_period = doc[F("chart_period")] | static_cast<uint8_t>(ChartPeriod::PERIOD_24_H);
-    m_data.m_swap_interval = static_cast<Swap>(doc[F("swap_interval")] | static_cast<uint8_t>(Swap::INTERVAL_1));
-    m_data.m_chart_style = static_cast<ChartStyle>(doc[F("chart_style")] | static_cast<uint8_t>(ChartStyle::SIMPLE));
-    m_data.m_heartbeat = doc[F("heartbeat")] | true;
+    m_coins.m_number_format = static_cast<NumberFormat>(doc[F("number_format")] | static_cast<uint8_t>(NumberFormat::DECIMAL_DOT));
+    m_coins.m_chart_period = doc[F("chart_period")] | static_cast<uint8_t>(ChartPeriod::PERIOD_24_H);
+    m_coins.m_swap_interval = static_cast<Swap>(doc[F("swap_interval")] | static_cast<uint8_t>(Swap::INTERVAL_1));
+    m_coins.m_chart_style = static_cast<ChartStyle>(doc[F("chart_style")] | static_cast<uint8_t>(ChartStyle::SIMPLE));
+    m_coins.m_heartbeat = doc[F("heartbeat")] | true;
 
     trace();
     if (toFile) {
@@ -108,13 +106,13 @@ void Settings::set(DynamicJsonDocument& doc, bool toFile)
 void Settings::write() const
 {
     TRC_I_FUNC
-    RecursiveMutexGuard guard(dataMutex);
+    RecursiveMutexGuard guard(coinsMutex);
     File file = SPIFFS.open(SETTINGS_FILE, "w");
     if (file) {
-        file.printf(R"({"mode":%u,)", static_cast<uint8_t>(m_data.m_mode));
+        file.printf(R"({"mode":%u,)", static_cast<uint8_t>(m_coins.m_mode));
         file.print(R"("coins":[)");
         bool first(true);
-        for (const auto& c : m_data.m_coins) {
+        for (const auto& c : m_coins.m_coins) {
             if (first) {
                 first = false;
             } else {
@@ -126,7 +124,7 @@ void Settings::write() const
 
         file.print(R"("currencies":[)");
         first = true;
-        for (const auto& c : m_data.m_currencies) {
+        for (const auto& c : m_coins.m_currencies) {
             if (first) {
                 first = false;
             } else {
@@ -135,11 +133,11 @@ void Settings::write() const
             file.printf(R"({"currency":"%s","symbol":"%s"})", c.currency.c_str(), c.symbol.c_str());
         }
         file.print(R"(],)");
-        file.printf(R"("swap_interval":%u,)", static_cast<uint8_t>(m_data.m_swap_interval));
-        file.printf(R"("chart_period":%u,)", static_cast<uint8_t>(m_data.m_chart_period));
-        file.printf(R"("chart_style":%u,)", static_cast<uint8_t>(m_data.m_chart_style));
-        file.printf(R"("number_format":%u,)", static_cast<uint8_t>(m_data.m_number_format));
-        file.printf(R"("heartbeat":%s)", m_data.m_heartbeat ? "true" : "false");
+        file.printf(R"("swap_interval":%u,)", static_cast<uint8_t>(m_coins.m_swap_interval));
+        file.printf(R"("chart_period":%u,)", static_cast<uint8_t>(m_coins.m_chart_period));
+        file.printf(R"("chart_style":%u,)", static_cast<uint8_t>(m_coins.m_chart_style));
+        file.printf(R"("number_format":%u,)", static_cast<uint8_t>(m_coins.m_number_format));
+        file.printf(R"("heartbeat":%s)", m_coins.m_heartbeat ? "true" : "false");
         file.print(R"(})");
         file.close();
     }
@@ -158,9 +156,8 @@ bool Settings::valid() const
 
 void Settings::trace() const
 {
-#if COIN_THING_SERIAL > 0
-    RecursiveMutexGuard guard(dataMutex);
-
+#if SERIAL_TRACE___ > 0
+    RecursiveMutexGuard guard(coinsMutex);
     TRC_I_PRINTF("Mode: >%u<\n", m_mode)
     TRC_I_PRINTLN("Coins:")
     for (const auto& c : m_coins) {
@@ -179,7 +176,7 @@ void Settings::trace() const
 void Settings::readBrightness()
 {
     TRC_I_FUNC
-    RecursiveMutexGuard guard(dataMutex);
+    RecursiveMutexGuard guard(coinsMutex);
     if (SPIFFS.exists(BRIGHTNESS_FILE)) {
         File file;
         file = SPIFFS.open(BRIGHTNESS_FILE, "r");
@@ -188,7 +185,7 @@ void Settings::readBrightness()
             StaticJsonDocument<JSON_DOCUMENT_BRIGHTNESS_SIZE> doc;
             ReadBufferingStream bufferedFile { file, 64 };
 
-#if COIN_THING_SERIAL > 0
+#if SERIAL_TRACE > 0
             ReadLoggingStream loggingStream(bufferedFile, Serial);
             DeserializationError error = deserializeJson(doc, loggingStream);
 #else
@@ -196,9 +193,9 @@ void Settings::readBrightness()
 #endif
 
             if (!error) {
-                m_data.m_brightness = doc[F("b")] | std::numeric_limits<uint8_t>::max();
+                m_coins.m_brightness = doc[F("b")] | std::numeric_limits<uint8_t>::max();
             } else {
-                m_data.m_brightness = std::numeric_limits<uint8_t>::max();
+                m_coins.m_brightness = std::numeric_limits<uint8_t>::max();
             }
             file.close();
         }
@@ -208,86 +205,82 @@ void Settings::readBrightness()
 void Settings::setBrightness(uint8_t b)
 {
     TRC_I_FUNC
-    RecursiveMutexGuard guard(dataMutex);
+    RecursiveMutexGuard guard(coinsMutex);
     if (b >= MIN_BRIGHTNESS
         && b <= std::numeric_limits<uint8_t>::max()) {
-        m_data.m_brightness = b;
+        m_coins.m_brightness = b;
         File file = SPIFFS.open(BRIGHTNESS_FILE, "w");
         if (file) {
-            file.printf(R"({"b":%u})", m_data.m_brightness);
+            file.printf(R"({"b":%u})", m_coins.m_brightness);
             file.close();
         }
     }
 }
 
-SettingsData::SettingsData()
+SettingsCoins::SettingsCoins()
 {
 }
 
-void SettingsData::swap(SettingsData& from)
-{
-}
-
-void SettingsData::clear()
+void SettingsCoins::clear()
 {
     m_coins.clear();
 }
 
-const String& SettingsData::coin(uint32_t index) const
+const String& SettingsCoins::coin(uint32_t index) const
 {
     return m_coins[validCoinIndex(index)].id;
 }
 
-const String& SettingsData::name(uint32_t index) const
+const String& SettingsCoins::name(uint32_t index) const
 {
     return m_coins[validCoinIndex(index)].name;
 }
 
-const String& SettingsData::symbol(uint32_t index) const
+const String& SettingsCoins::symbol(uint32_t index) const
 {
     return m_coins[validCoinIndex(index)].symbol;
 }
 
-const String& SettingsData::currency1() const
+const String& SettingsCoins::currency1() const
 {
     return m_currencies[0].currency;
 }
 
-const String& SettingsData::currency1Symbol() const
+const String& SettingsCoins::currency1Symbol() const
 {
     return m_currencies[0].symbol;
 }
 
-String SettingsData::currency1Lower() const
+String SettingsCoins::currency1Lower() const
 {
     String l(m_currencies[0].currency);
     l.toLowerCase();
     return l;
 }
 
-const String& SettingsData::currency2() const
+const String& SettingsCoins::currency2() const
 {
     return m_currencies[1].currency;
 }
 
-const String& SettingsData::currency2Symbol() const
+const String& SettingsCoins::currency2Symbol() const
 {
     return m_currencies[1].symbol;
 }
 
-String SettingsData::currency2Lower() const
+String SettingsCoins::currency2Lower() const
 {
     String l(m_currencies[1].currency);
     l.toLowerCase();
     return l;
 }
 
-uint32_t SettingsData::numberCoins() const
+uint32_t SettingsCoins::numberCoins() const
 {
     return m_coins.size();
 }
 
-uint32_t SettingsData::validCoinIndex(uint32_t index) const
+uint32_t SettingsCoins::validCoinIndex(uint32_t index) const
 {
     if (index >= m_coins.size()) {
         index = 0;

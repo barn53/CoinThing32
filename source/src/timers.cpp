@@ -1,4 +1,5 @@
 #include "timers.h"
+#include "display.h"
 #include "semaphores.h"
 
 namespace cointhing {
@@ -12,15 +13,17 @@ void createTimers()
     fetchPriceTimer = xTimerCreate("fetchPriceTimer", (20 * 1000) / portTICK_PERIOD_MS, pdTRUE, nullptr, [](TimerHandle_t xTimer) {
         xSemaphoreGive(fetchPriceSemaphore);
     });
-    xTimerStart(fetchPriceTimer, 0);
+    // xTimerStart(fetchPriceTimer, 0);
 
     fetchChartTimer = xTimerCreate("fetchChartTimer", (15 * 60 * 1000) / portTICK_PERIOD_MS, pdTRUE, nullptr, [](TimerHandle_t xTimer) {
         xSemaphoreGive(fetchChartSemaphore);
     });
-    xTimerStart(fetchChartTimer, 0);
+    // xTimerStart(fetchChartTimer, 0);
 
     displayNextTimer = xTimerCreate("displayNextTimer", (2 * 1000) / portTICK_PERIOD_MS, pdTRUE, nullptr, [](TimerHandle_t xTimer) {
-        xSemaphoreGive(displayNextSemaphore);
+        // xSemaphoreGive(displayNextSemaphore);
+        // xTaskNotifyGive(displayTaskHandle);
+        xTaskNotify(displayTaskHandle, static_cast<uint32_t>(DisplayNotificationType::showNextId), eSetValueWithOverwrite);
     });
     xTimerStart(displayNextTimer, 0);
 }

@@ -3,17 +3,25 @@
 
 namespace cointhing {
 
+enum class DisplayNotificationType : uint32_t {
+    showNextId = 1,
+    settingsChanged,
+};
+
 class Display {
 public:
     Display();
 
-    void show(bool next);
-    void clear();
+    void resetCoinId();
+    void nextCoinId();
+
+    void clear() const;
+
+    void show() const;
+    void showNewSettings() const;
 
 private:
-    void nextId();
-
-    uint32_t displayId;
+    uint32_t displayCoinIndex;
 };
 
 extern TFT_eSPI tft;

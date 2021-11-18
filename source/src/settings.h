@@ -4,6 +4,9 @@
 #include <ArduinoJson.h>
 #include <array>
 
+#define SETTINGS_FILE "/settings.json"
+#define BRIGHTNESS_FILE "/brightness.json"
+
 namespace cointhing {
 
 enum class ChartStyle : uint8_t {
@@ -45,10 +48,10 @@ struct Currency {
     String symbol;
 };
 
-class SettingsData {
+class SettingsCoins {
 public:
     friend class Settings;
-    SettingsData();
+    SettingsCoins();
 
     void clear();
 
@@ -74,8 +77,6 @@ public:
     bool heartbeat() const { return m_heartbeat; }
     uint8_t brightness() const { return m_brightness; }
 
-    void swap(SettingsData& from);
-
 private:
     uint32_t validCoinIndex(uint32_t index) const;
 
@@ -96,6 +97,7 @@ public:
     Settings();
 
     void set(const char* json);
+
     void read();
     void write() const;
     void deleteFile() const;
@@ -105,13 +107,13 @@ public:
     void readBrightness();
     void setBrightness(uint8_t b);
 
-    const SettingsData& data() const { return m_data; }
+    const SettingsCoins& coins() const { return m_coins; }
 
 private:
     void set(DynamicJsonDocument& doc, bool toFile);
     void trace() const;
 
-    SettingsData m_data;
+    SettingsCoins m_coins;
 };
 
 extern Settings settings;

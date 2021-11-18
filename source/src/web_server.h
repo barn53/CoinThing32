@@ -1,12 +1,12 @@
 #pragma once
 #include <Arduino.h>
-#include <WebServer.h>
+#include <ESPAsyncWebServer.h>
 
 namespace cointhing {
 
-extern WebServer server;
-extern TaskHandle_t serverTaskHandle;
+extern AsyncWebServer server;
 
-void createServerTask();
+void createServer();
 
 } // namespace cointhing
+

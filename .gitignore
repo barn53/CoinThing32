@@ -3,6 +3,9 @@
 .pio
 .vscode/*
 
+source/data/version.spiffs
+source/data/wifi.json
+source/data/*.gz
+
+source/src/pre.h
 source/src/secrets.h
-
-

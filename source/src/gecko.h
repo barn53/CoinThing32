@@ -24,18 +24,19 @@ public:
     void fetchCharts();
     bool valid() const;
 
-    const std::vector<CoinPrices>& getValues() const { return m_prices; }
+    const std::vector<CoinPrices>& getCoinPrices() const { return m_prices; }
     const std::map<String, std::vector<float>>& getChartData() const { return m_chart_data; }
-    const SettingsData& getSettings() const { return m_settings; }
+    const SettingsCoins& getSettings() const { return m_settings; }
 
 private:
     // These settings and values are consistent when synchronized with dataMutex
-    SettingsData m_settings;
+    SettingsCoins m_settings;
     std::vector<CoinPrices> m_prices;
     std::map<String, std::vector<float>> m_chart_data;
 };
 
 extern Gecko gecko;
+
 extern TaskHandle_t geckoPriceTaskHandle;
 extern TaskHandle_t geckoChartTaskHandle;
 

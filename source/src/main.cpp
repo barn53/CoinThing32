@@ -3,6 +3,7 @@
 #include "semaphores.h"
 #include "tasks.h"
 #include "timers.h"
+#include "web_server.h"
 #include "wifi_utils.h"
 #include <Arduino.h>
 #include <SPIFFS.h>
@@ -14,8 +15,8 @@
                  R"({"id":"cardano","symbol":"ADA","name":"Cardano"},)"                                 \
                  R"({"id":"polkadot","symbol":"DOT","name":"Polkadot"},)"                               \
                  R"({"id":"dogecoin","symbol":"DOGE","name":"Dogecoin"},)"                              \
-                 R"({"id":"shiba-inu","symbol":"SHIB","name":"Shiba Inu"},)"                           \
-                 R"({"id":"terra-luna","symbol":"LUNA","name":"Terra"},)"                              \
+                 R"({"id":"shiba-inu","symbol":"SHIB","name":"Shiba Inu"},)"                            \
+                 R"({"id":"terra-luna","symbol":"LUNA","name":"Terra"},)"                               \
                  R"({"id":"litecoin","symbol":"LTC","name":"Litecoin"}],)"                              \
                  R"("currencies":[{"currency":"EUR","symbol":"€"},{"currency":"USD","symbol":"$"}],)" \
                  R"("swap_interval":0,"chart_period":8,"chart_style":1,"number_format":1,"heartbeat":true})"
@@ -39,7 +40,9 @@ void setup()
     createEventLoop();
     createTimers();
 
-    settings.set(SETTINGS);
+    createServer();
+
+    settings.read();
 }
 
 void loop()

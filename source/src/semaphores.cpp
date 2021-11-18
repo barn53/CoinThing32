@@ -6,7 +6,7 @@ SemaphoreHandle_t fetchPriceSemaphore;
 SemaphoreHandle_t fetchChartSemaphore;
 SemaphoreHandle_t displayNextSemaphore;
 
-SemaphoreHandle_t dataMutex;
+SemaphoreHandle_t coinsMutex;
 
 void createSemaphores()
 {
@@ -14,7 +14,7 @@ void createSemaphores()
     fetchChartSemaphore = xSemaphoreCreateBinary();
     displayNextSemaphore = xSemaphoreCreateBinary();
 
-    dataMutex = xSemaphoreCreateRecursiveMutex();
+    coinsMutex = xSemaphoreCreateRecursiveMutex();
 }
 
 } // namespace cointhing
