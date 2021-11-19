@@ -43,7 +43,7 @@ public:
     uint32_t getCountChartFetches() const { return m_count_chart_fetches; };
 
 private:
-    // These settings, prices and chart data are consistent
+    // These settings, prices and chart data are in sync by geckoSyncMutex
     SettingsCoins m_settings_coins;
     std::vector<CoinPrices> m_prices;
     std::map<String, std::vector<float>> m_chart_data;
