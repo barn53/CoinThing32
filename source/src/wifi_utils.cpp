@@ -1,5 +1,7 @@
 #include "wifi_utils.h"
+#include "events.h"
 #include "secrets.h"
+#include "stats.h"
 #include "utils.h"
 
 namespace cointhing {
@@ -39,9 +41,33 @@ void wifiWake()
     }
 }
 
+void wifiEventHandler(system_event_id_t event)
+{
+    TRC_I_FUNC
+    switch (event) {
+    case SYSTEM_EVENT_STA_CONNECTED:
+        stats.inc_wifi_sta_connected();
+        break;
+    case SYSTEM_EVENT_STA_DISCONNECTED:
+        stats.inc_wifi_sta_disconnected();
+        TRC_I_PRINT("Disconnected - try to reconnect ");
+        while (WiFi.status() != WL_CONNECTED) {
+            TRC_PRINT(".");
+            WiFi.reconnect();
+            delay(500);
+        }
+        esp_event_post_to(loopHandle, COINTHING_EVENT_BASE, eventIdWiFiReconnected, (void*)__PRETTY_FUNCTION__, strlen(__PRETTY_FUNCTION__) + 1, 0);
+        break;
+    default:
+        break;
+    }
+}
+
 void setupWiFi()
 {
     TRC_I_FUNC
+    WiFi.onEvent(wifiEventHandler);
+
     wifiWake();
 
     if (!WiFi.setHostname(HOST_NAME)) {

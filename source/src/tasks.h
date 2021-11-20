@@ -3,10 +3,14 @@
 
 namespace cointhing {
 
-extern TaskHandle_t highWaterMarkTaskHandle;
+enum class HousekeepingNotificationType : uint32_t {
+    fetchTime,
+};
+
+extern TaskHandle_t housekeepingTaskHandle;
 extern TaskHandle_t heartbeatTaskHandle;
 
-void createHighWaterMarkTask();
+void createHousekeepingTask();
 void createHeartbeatTask();
 
 } // namespace cointhing

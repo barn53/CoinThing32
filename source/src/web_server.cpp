@@ -1,5 +1,6 @@
 #include "web_server.h"
 #include "settings.h"
+#include "stats.h"
 #include "tasks.h"
 #include "trace.h"
 #include "utils.h"
@@ -100,6 +101,12 @@ bool handleSet(AsyncWebServerRequest* request)
     return true;
 }
 
+bool handleStats(AsyncWebServerRequest* request)
+{
+    request->send(200, F("application/json"), stats.toJson());
+    return true;
+}
+
 bool handleAction(AsyncWebServerRequest* request)
 {
     TRC_I_FUNC
@@ -108,6 +115,11 @@ bool handleAction(AsyncWebServerRequest* request)
 
     if (path == F("/action/set")) {
         return handleSet(request);
+    } else if (path == F("/stats")) {
+        return handleStats(request);
+    } else if (path == F("/crash")) {
+        auto i(7 / 0);
+        return false;
         // } else if (path == F("/action/reset/esp")) {
         //     return handleResetESP();
         // } else if (path == F("/action/reset/settings")) {
@@ -134,6 +146,7 @@ bool handleAction(AsyncWebServerRequest* request)
 void createServer()
 {
     server.onNotFound([](AsyncWebServerRequest* request) { // If the client requests any URI
+        stats.inc_server_requests();
         if (!handleAction(request)
             && !streamFile(request)) {
             request->send(404, F("text/plain"), F("404: Not Found"));

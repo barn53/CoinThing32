@@ -2,6 +2,7 @@
 #include "display.h"
 #include "events.h"
 #include "gecko.h"
+#include "stats.h"
 #include "tasks.h"
 #include "timers.h"
 #include "web_server.h"
@@ -18,6 +19,16 @@ SemaphoreHandle_t coinsMutex = xSemaphoreCreateRecursiveMutex();
 void setup()
 {
     Serial.begin(115200);
+    TRC_I_FUNC
+
+    if (esp_reset_reason() == ESP_RST_POWERON) {
+        stats.reset();
+    } else if (esp_reset_reason() == ESP_RST_BROWNOUT) {
+        stats.inc_brownout_counter();
+    } else {
+        stats.inc_crash_counter();
+    }
+
     SPIFFS.begin();
 
     createEventLoop();
@@ -25,9 +36,10 @@ void setup()
 
     setupWiFi();
 
+    createHousekeepingTask();
+
     createGeckoTask();
     createDisplayTask();
-    createHighWaterMarkTask();
     createHeartbeatTask();
 
     createTimers();

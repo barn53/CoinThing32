@@ -12,9 +12,10 @@ public:
 
     bool read(const char* url, DynamicJsonDocument& jsonDoc);
     bool read(const char* url, DynamicJsonDocument& jsonDoc, DynamicJsonDocument& jsonFilter);
+    bool readHTTP(const char* url, DynamicJsonDocument& jsonDoc);
 
 private:
-    WiFiClientSecure m_client;
+    WiFiClientSecure m_secure_client;
     HTTPClient m_http;
     mutable SemaphoreHandle_t m_mutex;
 };

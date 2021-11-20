@@ -2,6 +2,7 @@
 #include "events.h"
 #include "http_json.h"
 #include "main.h"
+#include "stats.h"
 #include "tasks.h"
 #include "utils.h"
 
@@ -45,7 +46,7 @@ const SettingsCoins& Gecko::getSettingsCoins() const
     return m_settings_coins;
 }
 
-void Gecko::fetchPrices()
+bool Gecko::fetchPrices()
 {
     TRC_I_FUNC
     String currency1(m_settings_coins.currency1Lower());
@@ -76,15 +77,17 @@ void Gecko::fetchPrices()
             coinValues.marketCapCurrency2 = doc[coin.id][currency2 + "_market_cap"] | std::numeric_limits<float>::infinity();
             m_prices.emplace_back(coinValues);
         }
-
-        ++m_count_price_fetches;
+        stats.inc_gecko_price_fetch();
         esp_event_post_to(loopHandle, COINTHING_EVENT_BASE, eventIdAllPricesUpdated, (void*)__PRETTY_FUNCTION__, strlen(__PRETTY_FUNCTION__) + 1, 0);
+        return true;
     } else {
+        stats.inc_gecko_price_fetch_fail();
         TRC_I_PRINTLN("HTTP read failed!");
+        return false;
     }
 }
 
-void Gecko::fetchCharts()
+bool Gecko::fetchCharts()
 {
     TRC_I_FUNC
     m_cancel.store(false);
@@ -103,7 +106,7 @@ void Gecko::fetchCharts()
         if (httpJson.read(url.c_str(), doc)) {
             if (m_cancel.load()) {
                 TRC_I_PRINTLN("Gecko::fetchCharts() cancelled");
-                return;
+                return true;
             }
             RecursiveMutexGuard g(geckoSyncMutex);
             JsonArray jPrices(doc["prices"]);
@@ -113,12 +116,16 @@ void Gecko::fetchCharts()
             for (const auto& p : jPrices) {
                 coinChartData.emplace_back(p[1].as<float>());
             }
-            ++m_count_chart_fetches;
+            stats.inc_gecko_chart_fetch();
             esp_event_post_to(loopHandle, COINTHING_EVENT_BASE, eventIdChartUpdated, (void*)coin.id.c_str(), coin.id.length() + 1, 0);
         } else {
+            stats.inc_gecko_chart_fetch_fail();
             TRC_I_PRINTLN("HTTP read failed!");
         }
     }
+
+    // what to when not all charts updated corrctly?
+    return true;
     esp_event_post_to(loopHandle, COINTHING_EVENT_BASE, eventIdAllChartsUpdated, (void*)__PRETTY_FUNCTION__, strlen(__PRETTY_FUNCTION__) + 1, 0);
 }
 
@@ -136,11 +143,17 @@ void geckoTask(void*)
             switch (notificationType) {
             case GeckoNotificationType::settingsChanged:
                 gecko.newSettings();
-                gecko.fetchPrices();
+                if (!gecko.fetchPrices()) {
+                    xTaskNotify(geckoTaskHandle, static_cast<uint32_t>(GeckoNotificationType::fetchPrices), eSetValueWithOverwrite);
+                    delay(500);
+                }
                 gecko.fetchCharts();
                 break;
             case GeckoNotificationType::fetchPrices:
-                gecko.fetchPrices();
+                if (!gecko.fetchPrices()) {
+                    xTaskNotify(geckoTaskHandle, static_cast<uint32_t>(GeckoNotificationType::fetchPrices), eSetValueWithOverwrite);
+                    delay(500);
+                }
                 break;
             case GeckoNotificationType::fetchCharts:
                 gecko.fetchCharts();
@@ -152,6 +165,7 @@ void geckoTask(void*)
 
 void createGeckoTask()
 {
+    TRC_I_FUNC
     xTaskCreatePinnedToCore(
         geckoTask, /* Task function. */
         "geckoTask", /* name of task. */

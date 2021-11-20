@@ -2,34 +2,46 @@
 #include "display.h"
 #include "gecko.h"
 #include "main.h"
+#include "stats.h"
 #include "web_server.h"
 
 namespace cointhing {
 
-TaskHandle_t highWaterMarkTaskHandle;
+TaskHandle_t housekeepingTaskHandle;
 TaskHandle_t heartbeatTaskHandle;
 
-void createHighWaterMarkTask()
+void createHousekeepingTask()
 {
+    TRC_I_FUNC
     xTaskCreate(
         [](void*) {
+            HousekeepingNotificationType notificationType;
             while (true) {
-                TRC_I_PRINTF("displayTask hwm:       %u\n", uxTaskGetStackHighWaterMark(displayTaskHandle));
-                TRC_I_PRINTF("geckoTask hwm:         %u\n", uxTaskGetStackHighWaterMark(geckoTaskHandle));
-                TRC_I_PRINTF("highWaterMarkTask hwm: %u\n", uxTaskGetStackHighWaterMark(nullptr));
-                TRC_I_PRINTF("minimum free size:     %u\n", heap_caps_get_minimum_free_size(MALLOC_CAP_8BIT | MALLOC_CAP_32BIT));
-                vTaskDelay(5000);
+                if (xTaskNotifyWait(0, 0xffffffff, reinterpret_cast<uint32_t*>(&notificationType), portMAX_DELAY)) {
+                    TRC_I_PRINTF("Notification type: %u\n", static_cast<uint32_t>(notificationType));
+                    switch (notificationType) {
+                    case HousekeepingNotificationType::fetchTime:
+                        if (!stats.fetchWorldTimeAPI()) {
+                            xTaskNotify(housekeepingTaskHandle, static_cast<uint32_t>(HousekeepingNotificationType::fetchTime), eSetValueWithOverwrite);
+                            delay(500);
+                        }
+                        break;
+                    }
+                }
             }
         }, /* Task function. */
-        "highWaterMarkTask", /* name of task. */
+        "housekeepingTask", /* name of task. */
         TASK_STACK_SIZE, /* Stack size of task */
         nullptr, /* parameter of the task */
         0, /* priority of the task */
-        &highWaterMarkTaskHandle /* Task handle to keep track of created task */);
+        &housekeepingTaskHandle /* Task handle to keep track of created task */);
+
+    xTaskNotify(housekeepingTaskHandle, static_cast<uint32_t>(HousekeepingNotificationType::fetchTime), eSetValueWithOverwrite);
 }
 
 void createHeartbeatTask()
 {
+    TRC_I_FUNC
     pinMode(2, OUTPUT); // on board led
     xTaskCreate(
         [](void*) {

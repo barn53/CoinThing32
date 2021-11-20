@@ -4,7 +4,7 @@
 namespace cointhing {
 
 enum class DisplayNotificationType : uint32_t {
-    showNextId = 1,
+    showNextId,
     settingsChanged,
 };
 

@@ -27,8 +27,8 @@ public:
 
     Gecko();
 
-    void fetchPrices();
-    void fetchCharts();
+    bool fetchPrices();
+    bool fetchCharts();
     bool valid() const;
 
     const std::vector<CoinPrices>& getCoinPrices() const;
@@ -39,17 +39,11 @@ public:
 
     void cancel() const { m_cancel.store(true); }
 
-    uint32_t getCountPriceFetches() const { return m_count_price_fetches; };
-    uint32_t getCountChartFetches() const { return m_count_chart_fetches; };
-
 private:
     // These settings, prices and chart data are in sync by geckoSyncMutex
     SettingsCoins m_settings_coins;
     std::vector<CoinPrices> m_prices;
     std::map<String, std::vector<float>> m_chart_data;
-
-    uint32_t m_count_price_fetches { 0 };
-    uint32_t m_count_chart_fetches { 0 };
 
     mutable std::atomic_bool m_cancel { false };
 };

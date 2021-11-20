@@ -1,6 +1,7 @@
 #include "settings.h"
 #include "events.h"
 #include "main.h"
+#include "stats.h"
 #include "trace.h"
 #include <StreamUtils.h>
 
@@ -99,7 +100,7 @@ void Settings::set(DynamicJsonDocument& doc, bool toFile)
     if (toFile) {
         write();
     }
-
+    stats.inc_settings_change();
     esp_event_post_to(loopHandle, COINTHING_EVENT_BASE, eventIdSettingsChanged, (void*)__PRETTY_FUNCTION__, strlen(__PRETTY_FUNCTION__) + 1, portMAX_DELAY);
 }
 

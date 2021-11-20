@@ -3,6 +3,7 @@
 #include "gecko.h"
 #include "main.h"
 #include "settings.h"
+#include "stats.h"
 #include "tasks.h"
 
 #include <ArduinoJson.h>
@@ -91,10 +92,7 @@ void Display::show() const
     tft.print(msg);
 
     tft.setCursor(0, 160);
-    msg = "fetches\nprice: ";
-    msg += gecko.getCountPriceFetches();
-    msg += ", chart: ";
-    msg += gecko.getCountChartFetches();
+    msg = stats.localTime();
     tft.fillRect(tft.textWidth(msg) - 5, 160, 240 - (tft.textWidth(msg) - 5), 20, TFT_BLACK);
     tft.print(msg);
 
@@ -149,6 +147,7 @@ void displayTask(void*)
 
 void createDisplayTask()
 {
+    TRC_I_FUNC
     xTaskCreatePinnedToCore(
         displayTask, /* Task function. */
         "displayTask", /* name of task. */
