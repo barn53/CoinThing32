@@ -21,10 +21,7 @@ void createHousekeepingTask()
                     TRC_I_PRINTF("Notification type: %u\n", static_cast<uint32_t>(notificationType));
                     switch (notificationType) {
                     case HousekeepingNotificationType::fetchTime:
-                        if (!stats.fetchWorldTimeAPI()) {
-                            xTaskNotify(housekeepingTaskHandle, static_cast<uint32_t>(HousekeepingNotificationType::fetchTime), eSetValueWithOverwrite);
-                            delay(500);
-                        }
+                        stats.fetchWorldTimeAPI();
                         break;
                     }
                 }

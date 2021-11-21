@@ -131,7 +131,7 @@
 
             $('#getSettings').off().click(function (e) {
                 $("#forSettings").empty()
-                $.get("/settings.json", function (data) {
+                $.get("/gecko.json", function (data) {
                     $("#forSettings").append(JSON.stringify(data))
                 }).fail(function () { $("#forSettings").append("failure") })
             })

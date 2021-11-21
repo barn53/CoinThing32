@@ -1,12 +1,15 @@
 #pragma once
+#include "utils.h"
 #include <Arduino.h>
 
 namespace cointhing {
 
 class Stats {
 public:
-    static String toJson();
+    static String toJson(bool withData);
+
     static String utcTime();
+    static time_t localTimestamp();
     static String localTime();
     static String utcStart();
 
@@ -28,6 +31,10 @@ public:
 
     static void inc_brownout_counter();
     static void inc_crash_counter();
+
+    static time_t get_last_price_fetch() { return last_price_fetch; }
+    static time_t get_last_wifi_connect() { return last_wifi_connect; }
+    static time_t get_last_wifi_disconnect() { return last_wifi_disconnect; }
 
 private:
     // time
@@ -51,6 +58,10 @@ private:
 
     static uint32_t wifi_sta_connected;
     static uint32_t wifi_sta_disconnected;
+
+    static time_t last_price_fetch;
+    static time_t last_wifi_connect;
+    static time_t last_wifi_disconnect;
 
     static uint32_t brownout_counter;
     static uint32_t crash_counter;

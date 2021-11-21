@@ -116,6 +116,15 @@ void formatNumber(float n, String& s, NumberFormat format, bool forceSign, bool 
     }
 }
 
+String timeFromTimestamp(time_t timestamp)
+{
+    char utc[21];
+    time_t t(timestamp);
+    tm* ct(localtime(&t));
+    strftime(utc, 21, "%F %T", ct);
+    return String(utc);
+}
+
 bool mutexTaken(SemaphoreHandle_t mutex)
 {
     return (xQueuePeek((QueueHandle_t)mutex, nullptr, 0) != pdTRUE);

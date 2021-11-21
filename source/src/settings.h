@@ -4,7 +4,8 @@
 #include <ArduinoJson.h>
 #include <array>
 
-#define SETTINGS_FILE "/settings.json"
+#define SETTINGS_FILE "/gecko.json"
+#define FINNHUB_SETTINGS_FILE "/finnhub.json"
 #define BRIGHTNESS_FILE "/brightness.json"
 
 namespace cointhing {
@@ -48,10 +49,10 @@ struct Currency {
     String symbol;
 };
 
-class SettingsCoins {
+class GeckoSettings {
 public:
     friend class Settings;
-    SettingsCoins();
+    GeckoSettings();
 
     void clear();
 
@@ -66,6 +67,8 @@ public:
     const String& currency2Symbol() const;
     String currency2Lower() const;
 
+    const std::array<Currency, 2>& getCurrencies() const { return m_currencies; }
+
     const std::vector<Coin>& coins() const { return m_coins; }
     uint32_t numberCoins() const;
 
@@ -74,8 +77,8 @@ public:
     uint8_t chartPeriod() const { return m_chart_period; }
     Swap swapInterval() const { return m_swap_interval; }
     ChartStyle chartStyle() const { return m_chart_style; }
+
     bool heartbeat() const { return m_heartbeat; }
-    uint8_t brightness() const { return m_brightness; }
 
 private:
     uint32_t validCoinIndex(uint32_t index) const;
@@ -89,7 +92,6 @@ private:
     Swap m_swap_interval { Swap::INTERVAL_1 };
     ChartStyle m_chart_style { ChartStyle::SIMPLE };
     bool m_heartbeat { true };
-    uint8_t m_brightness { std::numeric_limits<uint8_t>::max() };
 };
 
 class Settings {
@@ -107,13 +109,16 @@ public:
     void readBrightness();
     void setBrightness(uint8_t b);
 
-    const SettingsCoins& coins() const { return m_coins; }
+    uint8_t brightness() const { return m_brightness; }
+
+    const GeckoSettings& coins() const { return m_gecko; }
 
 private:
     void set(DynamicJsonDocument& doc, bool toFile);
     void trace() const;
 
-    SettingsCoins m_coins;
+    GeckoSettings m_gecko;
+    uint8_t m_brightness { std::numeric_limits<uint8_t>::max() };
 };
 
 extern Settings settings;

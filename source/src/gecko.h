@@ -27,21 +27,23 @@ public:
 
     Gecko();
 
-    bool fetchPrices();
-    bool fetchCharts();
+    void fetchPrices();
+    void fetchCharts();
     bool valid() const;
 
     const std::vector<CoinPrices>& getCoinPrices() const;
     const std::map<String, std::vector<float>>& getChartData() const;
 
     void newSettings();
-    const SettingsCoins& getSettingsCoins() const;
+    const GeckoSettings& getSettings() const;
 
     void cancel() const { m_cancel.store(true); }
 
+    String toJson() const;
+
 private:
     // These settings, prices and chart data are in sync by geckoSyncMutex
-    SettingsCoins m_settings_coins;
+    GeckoSettings m_settings;
     std::vector<CoinPrices> m_prices;
     std::map<String, std::vector<float>> m_chart_data;
 

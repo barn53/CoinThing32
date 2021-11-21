@@ -4,7 +4,6 @@
 #include "http_json.h"
 #include "tasks.h"
 #include "trace.h"
-#include "utils.h"
 
 #include <ArduinoJson.h>
 #include <SPIFFS.h>
@@ -31,6 +30,10 @@ RTC_NOINIT_ATTR uint32_t Stats::server_requests;
 
 RTC_NOINIT_ATTR uint32_t Stats::wifi_sta_connected;
 RTC_NOINIT_ATTR uint32_t Stats::wifi_sta_disconnected;
+
+RTC_NOINIT_ATTR time_t Stats::last_price_fetch;
+RTC_NOINIT_ATTR time_t Stats::last_wifi_connect;
+RTC_NOINIT_ATTR time_t Stats::last_wifi_disconnect;
 
 RTC_NOINIT_ATTR uint32_t Stats::brownout_counter;
 RTC_NOINIT_ATTR uint32_t Stats::crash_counter;
@@ -62,6 +65,10 @@ void Stats::reset()
     wifi_sta_connected = 0;
     wifi_sta_disconnected = 0;
 
+    last_price_fetch = 0;
+    last_wifi_connect = 0;
+    last_wifi_disconnect = 0;
+
     brownout_counter = 0;
     crash_counter = 0;
 }
@@ -89,6 +96,7 @@ void Stats::inc_gecko_chart_fetch_fail()
 void Stats::inc_time_fetch()
 {
     RecursiveMutexGuard g(stats_sync_mutex);
+    last_price_fetch = localTimestamp();
     ++time_fetch;
 }
 void Stats::inc_time_fetch_fail()
@@ -109,11 +117,13 @@ void Stats::inc_server_requests()
 void Stats::inc_wifi_sta_connected()
 {
     RecursiveMutexGuard g(stats_sync_mutex);
+    last_wifi_connect = localTimestamp();
     ++wifi_sta_connected;
 }
 void Stats::inc_wifi_sta_disconnected()
 {
     RecursiveMutexGuard g(stats_sync_mutex);
+    last_wifi_disconnect = localTimestamp();
     ++wifi_sta_disconnected;
 }
 void Stats::inc_brownout_counter()
@@ -127,7 +137,7 @@ void Stats::inc_crash_counter()
     ++crash_counter;
 }
 
-String Stats::toJson()
+String Stats::toJson(bool withData)
 {
     TRC_I_FUNC
     RecursiveMutexGuard g(stats_sync_mutex);
@@ -169,6 +179,12 @@ String Stats::toJson()
     json += R"(,"crashes":)" + String(crash_counter);
     json += "}"; // counters
 
+    json += R"(,"timestamps":{)";
+    json += R"("last price fetch":")" + timeFromTimestamp(last_price_fetch) + R"(")";
+    json += R"(,"last wifi connect":")" + timeFromTimestamp(last_wifi_connect) + R"(")";
+    json += R"(,"last wifi disconnect":")" + timeFromTimestamp(last_wifi_disconnect) + R"(")";
+    json += "}"; // timestamps
+
     json += R"(,"memory":{)";
 
     json += R"("task high water marks":{)";
@@ -186,51 +202,51 @@ String Stats::toJson()
 
     json += "}"; // stats
 
-    if (SPIFFS.exists(SETTINGS_FILE)) {
-        File file;
-        file = SPIFFS.open(SETTINGS_FILE, "r");
-        if (file) {
-            json += R"(,"settings":)";
-            json += file.readString();
+    if (withData) {
+        json += R"(,"data":)";
+        json += gecko.toJson();
+
+        if (SPIFFS.exists(SETTINGS_FILE)) {
+            File file;
+            file = SPIFFS.open(SETTINGS_FILE, "r");
+            if (file) {
+                json += R"(,"settings":)";
+                json += file.readString();
+            }
+        }
+
+        if (SPIFFS.exists(BRIGHTNESS_FILE)) {
+            File file;
+            file = SPIFFS.open(BRIGHTNESS_FILE, "r");
+            if (file) {
+                json += R"(,"brightness":)";
+                json += file.readString();
+            }
         }
     }
 
-    if (SPIFFS.exists(BRIGHTNESS_FILE)) {
-        File file;
-        file = SPIFFS.open(BRIGHTNESS_FILE, "r");
-        if (file) {
-            json += R"(,"brightness":)";
-            json += file.readString();
-        }
-    }
     json += "}"; // top level
     return json;
 }
 
 String Stats::utcTime()
 {
-    char utc[21];
-    time_t t(utc_time_start + (esp_timer_get_time() / 1000 / 1000));
-    tm* ct(localtime(&t));
-    strftime(utc, 21, "%F %T", ct);
-    return String(utc);
+    return timeFromTimestamp(utc_time_start + (esp_timer_get_time() / 1000 / 1000));
+}
+
+time_t Stats::localTimestamp()
+{
+    return (utc_time_start + dst_offset + raw_offset + (esp_timer_get_time() / 1000 / 1000));
 }
 
 String Stats::localTime()
 {
-    char utc[21];
-    time_t t(utc_time_start + dst_offset + raw_offset + (esp_timer_get_time() / 1000 / 1000));
-    tm* ct(localtime(&t));
-    strftime(utc, 21, "%F %T", ct);
-    return String(utc);
+    return timeFromTimestamp(localTimestamp());
 }
 
 String Stats::utcStart()
 {
-    char utc[21];
-    tm* ct(localtime(&utc_time_start));
-    strftime(utc, 21, "%F %T", ct);
-    return String(utc);
+    return timeFromTimestamp(utc_time_start);
 }
 
 bool Stats::fetchTimeAPI()

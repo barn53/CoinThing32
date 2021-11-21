@@ -14,6 +14,8 @@ enum class NumberFormat : uint8_t {
 };
 void formatNumber(float n, String& s, NumberFormat format, bool forceSign, bool dash00, uint8_t forceDecimalPlaces = std::numeric_limits<uint8_t>::max());
 
+String timeFromTimestamp(time_t timestamp);
+
 class MutexGuard {
 public:
     MutexGuard(SemaphoreHandle_t mutex)

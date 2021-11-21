@@ -101,9 +101,9 @@ bool handleSet(AsyncWebServerRequest* request)
     return true;
 }
 
-bool handleStats(AsyncWebServerRequest* request)
+bool handleStats(AsyncWebServerRequest* request, bool withData)
 {
-    request->send(200, F("application/json"), stats.toJson());
+    request->send(200, F("application/json"), stats.toJson(withData));
     return true;
 }
 
@@ -116,7 +116,12 @@ bool handleAction(AsyncWebServerRequest* request)
     if (path == F("/action/set")) {
         return handleSet(request);
     } else if (path == F("/stats")) {
-        return handleStats(request);
+        return handleStats(request, false);
+    } else if (path == F("/stats2")) {
+        return handleStats(request, true);
+    } else if (path == F("/wifioff")) {
+        WiFi.setSleep(WIFI_PS_MAX_MODEM);
+        return true;
     } else if (path == F("/crash")) {
         auto i(7 / 0);
         return false;

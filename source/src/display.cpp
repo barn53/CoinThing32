@@ -51,49 +51,76 @@ void Display::show() const
     }
 
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
-    tft.setCursor(0, 10);
     tft.loadFont(F("NotoSans-Regular20"));
 
-    const auto& settingsCoins(gecko.getSettingsCoins());
+    const auto& geckoSettings(gecko.getSettings());
     const auto& coinPrices(gecko.getCoinPrices()[m_display_coin_index]);
 
-    String msg(settingsCoins.name(m_display_coin_index));
+    String msg(geckoSettings.name(m_display_coin_index));
+    int16_t msgY(10);
+    tft.setCursor(0, msgY);
     msg += ": ";
     msg += coinPrices.priceCurrency1;
-    msg += settingsCoins.currency1Symbol();
-    tft.fillRect(tft.textWidth(msg) - 5, 10, 240 - (tft.textWidth(msg) - 5), 20, TFT_BLACK);
+    msg += geckoSettings.currency1Symbol();
+    tft.fillRect(tft.textWidth(msg) - 5, msgY, TFT_WIDTH - (tft.textWidth(msg) - 5), 20, TFT_BLACK);
     tft.print(msg);
 
-    tft.setCursor(0, 40);
+    msgY += 30;
+    tft.setCursor(0, msgY);
     msg = "24h change: ";
     msg += coinPrices.change24hCurrency1;
     msg += "%";
-    tft.fillRect(tft.textWidth(msg) - 5, 40, 240 - (tft.textWidth(msg) - 5), 20, TFT_BLACK);
+    tft.fillRect(tft.textWidth(msg) - 5, msgY, TFT_WIDTH - (tft.textWidth(msg) - 5), 20, TFT_BLACK);
     tft.print(msg);
 
-    tft.setCursor(0, 70);
+    msgY += 30;
+    tft.setCursor(0, msgY);
     msg = "Cap: ";
     msg += coinPrices.marketCapCurrency1;
-    msg += settingsCoins.currency1Symbol();
-    tft.fillRect(tft.textWidth(msg) - 5, 70, 240 - (tft.textWidth(msg) - 5), 20, TFT_BLACK);
+    msg += geckoSettings.currency1Symbol();
+    tft.fillRect(tft.textWidth(msg) - 5, msgY, TFT_WIDTH - (tft.textWidth(msg) - 5), 20, TFT_BLACK);
     tft.print(msg);
 
-    tft.setCursor(0, 100);
+    msgY += 30;
+    tft.setCursor(0, msgY);
     msg = "24h vol: ";
     msg += coinPrices.volume24hCurrency1;
-    msg += settingsCoins.currency1Symbol();
-    tft.fillRect(tft.textWidth(msg) - 5, 100, 240 - (tft.textWidth(msg) - 5), 20, TFT_BLACK);
+    msg += geckoSettings.currency1Symbol();
+    tft.fillRect(tft.textWidth(msg) - 5, msgY, TFT_WIDTH - (tft.textWidth(msg) - 5), 20, TFT_BLACK);
     tft.print(msg);
 
-    tft.setCursor(0, 130);
+    msgY += 30;
+    tft.setCursor(0, msgY);
     msg = "charts: ";
     msg += gecko.getChartData().size();
-    tft.fillRect(tft.textWidth(msg) - 5, 130, 240 - (tft.textWidth(msg) - 5), 20, TFT_BLACK);
+    tft.fillRect(tft.textWidth(msg) - 5, msgY, TFT_WIDTH - (tft.textWidth(msg) - 5), 20, TFT_BLACK);
     tft.print(msg);
 
-    tft.setCursor(0, 160);
+    msgY += 30;
+    tft.setCursor(0, msgY);
     msg = stats.localTime();
-    tft.fillRect(tft.textWidth(msg) - 5, 160, 240 - (tft.textWidth(msg) - 5), 20, TFT_BLACK);
+    tft.fillRect(tft.textWidth(msg) - 5, msgY, TFT_WIDTH - (tft.textWidth(msg) - 5), 20, TFT_BLACK);
+    tft.print(msg);
+
+    msgY += 30;
+    tft.setCursor(0, msgY);
+    msg = "lpf: ";
+    msg += timeFromTimestamp(stats.get_last_price_fetch());
+    tft.fillRect(tft.textWidth(msg) - 5, msgY, TFT_WIDTH - (tft.textWidth(msg) - 5), 20, TFT_BLACK);
+    tft.print(msg);
+
+    msgY += 30;
+    tft.setCursor(0, msgY);
+    msg = "lwc: ";
+    msg += timeFromTimestamp(stats.get_last_wifi_connect());
+    tft.fillRect(tft.textWidth(msg) - 5, msgY, TFT_WIDTH - (tft.textWidth(msg) - 5), 20, TFT_BLACK);
+    tft.print(msg);
+
+    msgY += 30;
+    tft.setCursor(0, msgY);
+    msg = "lwd: ";
+    msg += timeFromTimestamp(stats.get_last_wifi_disconnect());
+    tft.fillRect(tft.textWidth(msg) - 5, msgY, TFT_WIDTH - (tft.textWidth(msg) - 5), 20, TFT_BLACK);
     tft.print(msg);
 
     tft.unloadFont();
