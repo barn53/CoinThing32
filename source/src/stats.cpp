@@ -76,6 +76,7 @@ void Stats::reset()
 void Stats::inc_gecko_price_fetch()
 {
     RecursiveMutexGuard g(stats_sync_mutex);
+    last_price_fetch = localTimestamp();
     ++gecko_price_fetch;
 }
 void Stats::inc_gecko_chart_fetch()
@@ -96,7 +97,6 @@ void Stats::inc_gecko_chart_fetch_fail()
 void Stats::inc_time_fetch()
 {
     RecursiveMutexGuard g(stats_sync_mutex);
-    last_price_fetch = localTimestamp();
     ++time_fetch;
 }
 void Stats::inc_time_fetch_fail()
