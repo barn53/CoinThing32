@@ -12,19 +12,12 @@ TaskHandle_t heartbeatTaskHandle;
 
 void createHousekeepingTask()
 {
-    TRC_I_FUNC
+    TraceFunction;
     xTaskCreate(
         [](void*) {
-            HousekeepingNotificationType notificationType;
             while (true) {
-                if (xTaskNotifyWait(0, 0xffffffff, reinterpret_cast<uint32_t*>(&notificationType), portMAX_DELAY)) {
-                    TRC_I_PRINTF("Notification type: %u\n", static_cast<uint32_t>(notificationType));
-                    switch (notificationType) {
-                    case HousekeepingNotificationType::fetchTime:
-                        stats.fetchWorldTimeAPI();
-                        break;
-                    }
-                }
+                stats.fetchWorldTimeAPI();
+                vTaskDelay(60 * 60 * 1000);
             }
         }, /* Task function. */
         "housekeepingTask", /* name of task. */
@@ -32,13 +25,11 @@ void createHousekeepingTask()
         nullptr, /* parameter of the task */
         0, /* priority of the task */
         &housekeepingTaskHandle /* Task handle to keep track of created task */);
-
-    xTaskNotify(housekeepingTaskHandle, static_cast<uint32_t>(HousekeepingNotificationType::fetchTime), eSetValueWithOverwrite);
 }
 
 void createHeartbeatTask()
 {
-    TRC_I_FUNC
+    TraceFunction;
     pinMode(2, OUTPUT); // on board led
     xTaskCreate(
         [](void*) {

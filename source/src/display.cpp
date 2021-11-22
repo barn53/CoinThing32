@@ -34,7 +34,7 @@ void Display::nextCoinId()
 
 void Display::show() const
 {
-    TRC_I_FUNC
+    TraceFunction;
     if (!gecko.valid()) {
         m_clear_on_show = true;
         return;
@@ -45,9 +45,9 @@ void Display::show() const
         m_clear_on_show = false;
     }
 
-    TRC_I_PRINTF("Show coin ID: %u\n", m_display_coin_index);
+    TraceIPrintf("Show coin ID: %u\n", m_display_coin_index);
     for (const auto& c : gecko.getChartData()) {
-        TRC_I_PRINTF("Coin: %s - values: %u\n", c.first.c_str(), c.second.size());
+        // TraceIPrintf("Coin: %s - values: %u\n", c.first.c_str(), c.second.size());
     }
 
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
@@ -128,7 +128,7 @@ void Display::show() const
 
 void Display::showNewSettings() const
 {
-    TRC_I_FUNC
+    TraceFunction;
     tft.loadFont(F("NotoSans-Regular20"));
     tft.fillScreen(TFT_GOLD);
     tft.setTextColor(TFT_WHITE, TFT_GOLD);
@@ -156,14 +156,14 @@ void displayTask(void*)
     DisplayNotificationType notificationType;
     while (true) {
         if (xTaskNotifyWait(0, 0xffffffff, reinterpret_cast<uint32_t*>(&notificationType), portMAX_DELAY)) {
-            TRC_I_PRINTF("Notification type: %u\n", static_cast<uint32_t>(notificationType));
+            TraceNIPrintf("Notification type: %u\n", static_cast<uint32_t>(notificationType));
             switch (notificationType) {
             case DisplayNotificationType::settingsChanged:
                 display.resetCoinId();
                 display.showNewSettings();
                 break;
             case DisplayNotificationType::showNextId:
-                RecursiveMutexGuard g(geckoSyncMutex);
+                RecursiveMutexGuard(geckoSyncMutex);
                 display.show();
                 display.nextCoinId();
                 break;
@@ -174,7 +174,7 @@ void displayTask(void*)
 
 void createDisplayTask()
 {
-    TRC_I_FUNC
+    TraceFunction;
     xTaskCreatePinnedToCore(
         displayTask, /* Task function. */
         "displayTask", /* name of task. */

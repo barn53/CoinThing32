@@ -22,8 +22,8 @@ bool HttpJson::read(const char* url, DynamicJsonDocument& jsonDoc)
 
 bool HttpJson::read(const char* url, DynamicJsonDocument& jsonDoc, DynamicJsonDocument& jsonFilter)
 {
-    TRC_I_FUNC
-    RecursiveMutexGuard g(m_mutex);
+    TraceFunction;
+    RecursiveMutexGuard(m_mutex);
     m_http.begin(m_secure_client, url);
     int httpCode = m_http.GET();
     if (httpCode > 0) {
@@ -33,10 +33,10 @@ bool HttpJson::read(const char* url, DynamicJsonDocument& jsonDoc, DynamicJsonDo
             m_http.end();
             return true;
         } else {
-            TRC_I_PRINTF("[HTTP] GET... : %d - %s\n", httpCode, m_http.errorToString(httpCode).c_str());
+            TraceIPrintf("[HTTP] GET... : %d - %s\n", httpCode, m_http.errorToString(httpCode).c_str());
         }
     } else {
-        TRC_I_PRINTF("[HTTP] GET... failed, error: %d - %s\n", httpCode, m_http.errorToString(httpCode).c_str());
+        TraceIPrintf("[HTTP] GET... failed, error: %d - %s\n", httpCode, m_http.errorToString(httpCode).c_str());
     }
     m_http.end();
     return false;
@@ -44,8 +44,8 @@ bool HttpJson::read(const char* url, DynamicJsonDocument& jsonDoc, DynamicJsonDo
 
 bool HttpJson::readHTTP(const char* url, DynamicJsonDocument& jsonDoc)
 {
-    TRC_I_FUNC
-    RecursiveMutexGuard g(m_mutex);
+    TraceFunction;
+    RecursiveMutexGuard(m_mutex);
     WiFiClient client;
     m_http.begin(client, url);
     int httpCode = m_http.GET();
@@ -56,10 +56,10 @@ bool HttpJson::readHTTP(const char* url, DynamicJsonDocument& jsonDoc)
             m_http.end();
             return true;
         } else {
-            TRC_I_PRINTF("[HTTP] GET... : %d - %s\n", httpCode, m_http.errorToString(httpCode).c_str());
+            TraceIPrintf("[HTTP] GET... : %d - %s\n", httpCode, m_http.errorToString(httpCode).c_str());
         }
     } else {
-        TRC_I_PRINTF("[HTTP] GET... failed, error: %d - %s\n", httpCode, m_http.errorToString(httpCode).c_str());
+        TraceIPrintf("[HTTP] GET... failed, error: %d - %s\n", httpCode, m_http.errorToString(httpCode).c_str());
     }
     m_http.end();
     return false;

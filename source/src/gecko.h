@@ -6,10 +6,10 @@
 
 namespace cointhing {
 
-enum class GeckoNotificationType : uint32_t {
-    settingsChanged,
-    fetchPrices,
-    fetchCharts,
+enum class GeckoRemit : uint32_t {
+    settingsChanged = (1 << 0),
+    fetchPrices = (1 << 1),
+    fetchCharts = (1 << 2),
 };
 
 class Gecko {
@@ -52,6 +52,7 @@ private:
 
 extern Gecko gecko;
 extern SemaphoreHandle_t geckoSyncMutex;
+extern QueueHandle_t geckoQueue;
 extern TaskHandle_t geckoTaskHandle;
 
 void createGeckoTask();

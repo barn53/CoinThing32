@@ -2,7 +2,7 @@
 #include "settings.h"
 #include "stats.h"
 #include "tasks.h"
-#include "trace.h"
+#include "tracer.h"
 #include "utils.h"
 
 #include <AsyncTCP.h>
@@ -35,9 +35,9 @@ String getContentType(const String& filename)
 
 bool streamFile(AsyncWebServerRequest* request, const char* filename)
 {
-    TRC_I_FUNC
-    TRC_I_PRINT("Stream file: ")
-    TRC_I_PRINT(filename)
+    TraceFunction;
+    TraceIPrint("Stream file: ");
+    TracePrintln(filename);
 
     String contentType = getContentType(filename);
     String filename_found;
@@ -46,8 +46,8 @@ bool streamFile(AsyncWebServerRequest* request, const char* filename)
 
     bool gzip(false);
     if (SPIFFS.exists(filename_gz)) {
-        TRC_I_PRINT(" - found .gz: ")
-        TRC_I_PRINT(filename_gz)
+        TraceIPrint(" - found .gz: ");
+        TracePrintln(filename_gz);
         filename_found = filename_gz;
         gzip = true;
     } else if (SPIFFS.exists(filename)) {
@@ -63,13 +63,13 @@ bool streamFile(AsyncWebServerRequest* request, const char* filename)
     }
     request->send(response);
 
-    TRC_I_PRINTLN(" - ok");
+    TraceIPrintln(" - ok");
     return true;
 }
 
 bool streamFile(AsyncWebServerRequest* request)
 {
-    TRC_I_FUNC
+    TraceFunction;
     String filename(request->url());
     if (filename.endsWith("/")) {
         filename += F("settings.html");
@@ -79,12 +79,13 @@ bool streamFile(AsyncWebServerRequest* request)
 
 bool handleSet(AsyncWebServerRequest* request)
 {
-#if SERIAL_TRACE > 0
-    TRC_I_PRINTLN("handleSet: parsed Query:");
+#if TRACER > 0
+    TraceFunction;
+    TraceIPrintln("handleSet: parsed Query:");
     for (int ii = 0; ii < request->args(); ++ii) {
-        TRC_I_PRINT(request->argName(ii));
-        TRC_PRINT(" -> ");
-        TRC_PRINTLN(request->arg(ii));
+        TraceIPrint(request->argName(ii));
+        TracePrint(" -> ");
+        TracePrintln(request->arg(ii));
     }
 #endif
 
@@ -109,9 +110,9 @@ bool handleStats(AsyncWebServerRequest* request, bool withData)
 
 bool handleAction(AsyncWebServerRequest* request)
 {
-    TRC_I_FUNC
+    TraceFunction;
     String path(request->url());
-    TRC_I_PRINTF("handleAction: path: %s\n", path.c_str());
+    TraceIPrintf("handleAction: path: %s\n", path.c_str());
 
     if (path == F("/action/set")) {
         return handleSet(request);

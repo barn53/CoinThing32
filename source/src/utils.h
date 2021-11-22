@@ -1,5 +1,5 @@
 #pragma once
-#include "trace.h"
+#include "tracer.h"
 #include <Arduino.h>
 
 namespace cointhing {
@@ -16,42 +16,54 @@ void formatNumber(float n, String& s, NumberFormat format, bool forceSign, bool 
 
 String timeFromTimestamp(time_t timestamp);
 
-class MutexGuard {
+class MutexGuard_ {
 public:
-    MutexGuard(SemaphoreHandle_t mutex)
+    MutexGuard_(SemaphoreHandle_t mutex, const char* name, const char* file, const char* function, uint32_t line)
         : m_guard(mutex)
+        , m_name(name)
+        , m_function(function)
     {
         xSemaphoreTake(m_guard, portMAX_DELAY);
-        TRC_I_PRINTF("  >>>>> take mutex %p\n", m_guard);
+        TraceNIPrintf("+ take mutex %s @ %s() @ %s:%u\n", m_name, m_function, file, line);
     }
-    ~MutexGuard()
+    ~MutexGuard_()
     {
-        TRC_I_PRINTF("  <<<<< give mutex %p\n", m_guard);
+        TraceNIPrintf("- give mutex %s @ %s()\n", m_name, m_function);
         xSemaphoreGive(m_guard);
     }
 
 private:
     SemaphoreHandle_t m_guard;
+    const char* m_name;
+    const char* m_function;
 };
 
-class RecursiveMutexGuard {
+class RecursiveMutexGuard_ {
 public:
-    RecursiveMutexGuard(SemaphoreHandle_t recursiveMutex)
+    RecursiveMutexGuard_(SemaphoreHandle_t recursiveMutex, const char* name, const char* function, const char* file, uint32_t line)
         : m_guard(recursiveMutex)
+        , m_name(name)
+        , m_function(function)
     {
         xSemaphoreTakeRecursive(m_guard, portMAX_DELAY);
-        TRC_I_PRINTF(">>>>> take recursive mutex %p\n", m_guard);
+        TraceNIPrintf("+ take recursive mutex %s @ %s() @ %s:%u\n", m_name, m_function, file, line);
     }
-    ~RecursiveMutexGuard()
+    ~RecursiveMutexGuard_()
     {
-        TRC_I_PRINTF("<<<<< give recursive mutex %p\n", m_guard);
+        TraceNIPrintf("- give recursive mutex %s @ %s()\n", m_name, m_function);
         xSemaphoreGiveRecursive(m_guard);
     }
 
 private:
     SemaphoreHandle_t m_guard;
+    const char* m_name;
+    const char* m_function;
 };
 
-bool mutexTaken(SemaphoreHandle_t mutex);
+#define MutexGuard(m) \
+    MutexGuard_ __g_##m(m, #m);
+
+#define RecursiveMutexGuard(m) \
+    RecursiveMutexGuard_ __g_##m(m, #m, __FUNCTION__, __FILE__, __LINE__);
 
 } // namespace cointhing

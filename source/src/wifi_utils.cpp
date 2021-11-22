@@ -8,6 +8,7 @@ namespace cointhing {
 
 void wifiSleep()
 {
+    TraceFunction;
     WiFi.disconnect();
     WiFi.mode(WIFI_OFF);
     WiFi.setSleep(true);
@@ -16,43 +17,44 @@ void wifiSleep()
 
 void wifiWake()
 {
+    TraceFunction;
     WiFi.setSleep(false);
     delay(1);
     WiFi.persistent(false);
     WiFi.mode(WIFI_STA);
     WiFi.enableSTA(true);
-    TRC_I_PRINT("WiFi mode: ");
+    TraceIPrint("WiFi mode: ");
     switch (WiFi.getMode()) {
     case WIFI_MODE_NULL:
-        TRC_PRINTLN("WIFI_MODE_NULL");
+        TracePrintln("WIFI_MODE_NULL");
         break;
     case WIFI_MODE_STA:
-        TRC_PRINTLN("WIFI_MODE_STA");
+        TracePrintln("WIFI_MODE_STA");
         break;
     case WIFI_MODE_AP:
-        TRC_PRINTLN("WIFI_MODE_AP");
+        TracePrintln("WIFI_MODE_AP");
         break;
     case WIFI_MODE_APSTA:
-        TRC_PRINTLN("WIFI_MODE_APSTA");
+        TracePrintln("WIFI_MODE_APSTA");
         break;
     case WIFI_MODE_MAX:
-        TRC_PRINTLN("WIFI_MODE_MAX");
+        TracePrintln("WIFI_MODE_MAX");
         break;
     }
 }
 
 void wifiEventHandler(system_event_id_t event)
 {
-    TRC_I_FUNC
+    TraceFunction;
     switch (event) {
     case SYSTEM_EVENT_STA_CONNECTED:
         stats.inc_wifi_sta_connected();
         break;
     case SYSTEM_EVENT_STA_DISCONNECTED:
         stats.inc_wifi_sta_disconnected();
-        TRC_I_PRINT("Disconnected - try to reconnect ");
+        TraceIPrint("Disconnected - try to reconnect ");
         while (WiFi.status() != WL_CONNECTED) {
-            TRC_PRINT(".");
+            TracePrint(".");
             WiFi.reconnect();
             delay(500);
         }
@@ -65,28 +67,28 @@ void wifiEventHandler(system_event_id_t event)
 
 void setupWiFi()
 {
-    TRC_I_FUNC
+    TraceFunction;
     WiFi.onEvent(wifiEventHandler);
 
     wifiWake();
 
     if (!WiFi.setHostname(HOST_NAME)) {
-        TRC_I_PRINTLN("setHostname() failed!");
+        TraceIPrintln("setHostname() failed!");
     }
     WiFi.begin(SECRET_SSID, SECRET_PASSWORD);
 
-    TRC_I_PRINT("Connecting ");
+    TraceIPrint("Connecting ");
     while (WiFi.status() != WL_CONNECTED) {
-        TRC_PRINT(".");
+        TracePrint(".");
         delay(100);
     }
 
-    TRC_PRINTLN("");
-    TRC_I_PRINTLN("Connected");
-    TRC_I_PRINTF(" IP address: %s\n", WiFi.localIP().toString().c_str());
-    TRC_I_PRINTF(" Hostname: %s\n", WiFi.getHostname());
-    TRC_I_PRINTF(" MAC: %s\n", WiFi.macAddress().c_str());
-    TRC_I_PRINTF(" Signal: %d dB\n", WiFi.RSSI());
+    TracePrintln("");
+    TraceIPrintln("Connected");
+    TraceIPrintf(" IP address: %s\n", WiFi.localIP().toString().c_str());
+    TraceIPrintf(" Hostname: %s\n", WiFi.getHostname());
+    TraceIPrintf(" MAC: %s\n", WiFi.macAddress().c_str());
+    TraceIPrintf(" Signal: %d dB\n", WiFi.RSSI());
 }
 
 } // namespace cointhing

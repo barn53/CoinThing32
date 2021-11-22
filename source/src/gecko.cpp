@@ -23,10 +23,10 @@ bool Gecko::valid() const
 
 void Gecko::newSettings()
 {
-    TRC_I_FUNC
+    TraceFunction;
     {
-        RecursiveMutexGuard g1(geckoSyncMutex);
-        RecursiveMutexGuard g2(coinsMutex);
+        RecursiveMutexGuard(geckoSyncMutex);
+        RecursiveMutexGuard(coinsMutex);
         m_settings = settings.coins();
         m_prices.clear();
         m_chart_data.clear();
@@ -49,7 +49,7 @@ const GeckoSettings& Gecko::getSettings() const
 
 void Gecko::fetchPrices()
 {
-    TRC_I_FUNC
+    TraceFunction;
     String currency1(m_settings.currency1Lower());
     String currency2(m_settings.currency2Lower());
     String url(F("https://api.coingecko.com/api/v3/simple/price?include_24hr_change=true&include_market_cap=true&include_24hr_vol=true&vs_currencies="));
@@ -62,16 +62,16 @@ void Gecko::fetchPrices()
         url += F(",");
     }
 
-    TRC_I_PRINTLN(url);
+    TraceIPrintln(url);
     DynamicJsonDocument doc(2048);
     bool redo(true);
     do {
         if (httpJson.read(url.c_str(), doc)) {
             if (m_cancel.load()) {
-                TRC_I_PRINTLN("Gecko::fetchPrices() cancelled");
+                TraceIPrintln("Gecko::fetchPrices() cancelled");
                 return;
             }
-            RecursiveMutexGuard g(geckoSyncMutex);
+            RecursiveMutexGuard(geckoSyncMutex);
             m_prices.clear();
             for (const auto& coin : m_settings.coins()) {
                 CoinPrices coinValues;
@@ -89,7 +89,7 @@ void Gecko::fetchPrices()
             stats.inc_gecko_price_fetch();
         } else {
             stats.inc_gecko_price_fetch_fail();
-            TRC_I_PRINTLN("HTTP read failed!");
+            TraceIPrintln("HTTP read failed!");
         }
     } while (redo);
 
@@ -98,7 +98,7 @@ void Gecko::fetchPrices()
 
 void Gecko::fetchCharts()
 {
-    TRC_I_FUNC
+    TraceFunction;
     DynamicJsonDocument filter(16);
     filter["prices"] = true;
     DynamicJsonDocument doc(12288);
@@ -109,16 +109,16 @@ void Gecko::fetchCharts()
         url += F("/market_chart?vs_currency=");
         url += currency1;
         url += F("&days=24&interval=daily");
-        TRC_I_PRINTLN(url);
+        TraceIPrintln(url);
 
         bool redo(true);
         do {
             if (httpJson.read(url.c_str(), doc)) {
                 if (m_cancel.load()) {
-                    TRC_I_PRINTLN("Gecko::fetchCharts() cancelled");
+                    TraceIPrintln("Gecko::fetchCharts() cancelled");
                     return;
                 }
-                RecursiveMutexGuard g(geckoSyncMutex);
+                RecursiveMutexGuard(geckoSyncMutex);
                 JsonArray jPrices(doc["prices"]);
                 auto& coinChartData(m_chart_data[coin.id]);
                 coinChartData.clear();
@@ -131,7 +131,7 @@ void Gecko::fetchCharts()
                 esp_event_post_to(loopHandle, COINTHING_EVENT_BASE, eventIdChartUpdated, (void*)coin.id.c_str(), coin.id.length() + 1, 0);
             } else {
                 stats.inc_gecko_chart_fetch_fail();
-                TRC_I_PRINTLN("HTTP read failed!");
+                TraceIPrintln("HTTP read failed!");
             }
         } while (redo);
     }
@@ -141,8 +141,8 @@ void Gecko::fetchCharts()
 
 String Gecko::toJson() const
 {
-    TRC_I_FUNC
-    RecursiveMutexGuard g(geckoSyncMutex);
+    TraceFunction;
+    RecursiveMutexGuard(geckoSyncMutex);
     String json("{");
 
     json += R"("coins":[)";
@@ -197,25 +197,26 @@ String Gecko::toJson() const
 
 Gecko gecko;
 SemaphoreHandle_t geckoSyncMutex = xSemaphoreCreateRecursiveMutex();
+QueueHandle_t geckoQueue = xQueueCreate(5, sizeof(GeckoRemit));
 TaskHandle_t geckoTaskHandle;
 
 void geckoTask(void*)
 {
-    GeckoNotificationType notificationType;
+    GeckoRemit type;
 
     while (true) {
-        if (xTaskNotifyWait(0, 0xffffffff, reinterpret_cast<uint32_t*>(&notificationType), portMAX_DELAY)) {
-            TRC_I_PRINTF("Notification type: %u\n", static_cast<uint32_t>(notificationType));
-            switch (notificationType) {
-            case GeckoNotificationType::settingsChanged:
+        if (xQueueReceive(geckoQueue, reinterpret_cast<void*>(&type), portMAX_DELAY)) {
+            TraceNIPrintf("Notification type: %u\n", static_cast<uint32_t>(type));
+            switch (type) {
+            case GeckoRemit::settingsChanged:
                 gecko.newSettings();
                 gecko.fetchPrices();
                 gecko.fetchCharts();
                 break;
-            case GeckoNotificationType::fetchPrices:
+            case GeckoRemit::fetchPrices:
                 gecko.fetchPrices();
                 break;
-            case GeckoNotificationType::fetchCharts:
+            case GeckoRemit::fetchCharts:
                 gecko.fetchCharts();
                 break;
             }
@@ -225,7 +226,7 @@ void geckoTask(void*)
 
 void createGeckoTask()
 {
-    TRC_I_FUNC
+    TraceFunction;
     xTaskCreatePinnedToCore(
         geckoTask, /* Task function. */
         "geckoTask", /* name of task. */

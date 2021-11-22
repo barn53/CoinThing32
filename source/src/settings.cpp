@@ -2,7 +2,7 @@
 #include "events.h"
 #include "main.h"
 #include "stats.h"
-#include "trace.h"
+#include "tracer.h"
 #include <StreamUtils.h>
 
 #include <FS.h>
@@ -22,17 +22,17 @@ Settings::Settings()
 
 void Settings::read()
 {
-    TRC_I_FUNC
-    RecursiveMutexGuard g(coinsMutex);
+    TraceFunction;
+    RecursiveMutexGuard(coinsMutex);
     if (SPIFFS.exists(SETTINGS_FILE)) {
         File file;
         file = SPIFFS.open(SETTINGS_FILE, "r");
         if (file) {
-            TRC_I_PRINTLN("Read settings: " SETTINGS_FILE);
+            TraceIPrintln("Read settings: " SETTINGS_FILE);
             DynamicJsonDocument doc(JSON_DOCUMENT_CONFIG_SIZE);
             ReadBufferingStream bufferedFile { file, 64 };
 
-#if SERIAL_TRACE > 0
+#if TRACER > 1
             ReadLoggingStream loggingStream(bufferedFile, Serial);
             DeserializationError error = deserializeJson(doc, loggingStream);
 #else
@@ -42,8 +42,8 @@ void Settings::read()
             if (!error) {
                 set(doc, false);
             } else {
-                TRC_I_PRINT(F("deserializeJson() failed: "));
-                TRC_I_PRINTLN(error.f_str());
+                TraceIPrint(F("deserializeJson() failed: "));
+                TraceIPrintln(error.f_str());
             }
             // Close the file (Curiously, File's destructor doesn't close the file)
             file.close();
@@ -53,21 +53,21 @@ void Settings::read()
 
 void Settings::set(const char* json)
 {
-    TRC_I_FUNC
+    TraceFunction;
     DynamicJsonDocument doc(JSON_DOCUMENT_CONFIG_SIZE);
     DeserializationError error = deserializeJson(doc, json);
     if (!error) {
         set(doc, true);
     } else {
-        TRC_I_PRINT(F("deserializeJson() failed: "));
-        TRC_I_PRINTLN(error.f_str());
+        TraceIPrint(F("deserializeJson() failed: "));
+        TraceIPrintln(error.f_str());
     }
 }
 
 void Settings::set(DynamicJsonDocument& doc, bool toFile)
 {
-    TRC_I_FUNC
-    RecursiveMutexGuard g(coinsMutex);
+    TraceFunction;
+    RecursiveMutexGuard(coinsMutex);
     m_gecko.m_mode = static_cast<Mode>(doc[F("mode")] | static_cast<uint8_t>(Mode::ONE_COIN));
     m_gecko.m_coins.clear();
     for (JsonObject elem : doc[F("coins")].as<JsonArray>()) {
@@ -106,8 +106,8 @@ void Settings::set(DynamicJsonDocument& doc, bool toFile)
 
 void Settings::write() const
 {
-    TRC_I_FUNC
-    RecursiveMutexGuard g(coinsMutex);
+    TraceFunction;
+    RecursiveMutexGuard(coinsMutex);
     File file = SPIFFS.open(SETTINGS_FILE, "w");
     if (file) {
         file.printf(R"({"mode":%u,)", static_cast<uint8_t>(m_gecko.m_mode));
@@ -157,36 +157,34 @@ bool Settings::valid() const
 
 void Settings::trace() const
 {
-#if SERIAL_TRACE___ > 0
-    RecursiveMutexGuard g(coinsMutex);
-    TRC_I_PRINTF("Mode: >%u<\n", m_mode)
-    TRC_I_PRINTLN("Coins:")
-    for (const auto& c : m_coins) {
-        TRC_I_PRINTF("id: >%s<, name: >%s<, symbol: >%s<, \n", c.id.c_str(), c.name.c_str(), c.symbol.c_str())
-    }
-    TRC_I_PRINTF("Currency:       >%s< >%s<\n", m_currencies[0].currency.c_str(), m_currencies[0].symbol.c_str())
-    TRC_I_PRINTF("Currency 2:     >%s< >%s<\n", m_currencies[1].currency.c_str(), m_currencies[1].symbol.c_str())
-    TRC_I_PRINTF("Number format:  >%u<\n", m_number_format)
-    TRC_I_PRINTF("Chart period:   >%u<\n", m_chart_period)
-    TRC_I_PRINTF("Swap interval:  >%u<\n", m_swap_interval)
-    TRC_I_PRINTF("Chart style:    >%u<\n", m_chart_style)
-    TRC_I_PRINTF("Heart beat:     >%s<\n", (m_heartbeat ? "true" : "false"))
+#if TRACER__ > 0
+    RecursiveMutexGuard(coinsMutex);
+    TraceIPrintf("Mode: >%u<\n", m_mode)
+        TraceIPrintln("Coins:") for (const auto& c : m_coins) {
+            TraceIPrintf("id: >%s<, name: >%s<, symbol: >%s<, \n", c.id.c_str(), c.name.c_str(), c.symbol.c_str())
+        } TraceIPrintf("Currency:       >%s< >%s<\n", m_currencies[0].currency.c_str(), m_currencies[0].symbol.c_str())
+            TraceIPrintf("Currency 2:     >%s< >%s<\n", m_currencies[1].currency.c_str(), m_currencies[1].symbol.c_str())
+                TraceIPrintf("Number format:  >%u<\n", m_number_format)
+                    TraceIPrintf("Chart period:   >%u<\n", m_chart_period)
+                        TraceIPrintf("Swap interval:  >%u<\n", m_swap_interval)
+                            TraceIPrintf("Chart style:    >%u<\n", m_chart_style)
+                                TraceIPrintf("Heart beat:     >%s<\n", (m_heartbeat ? "true" : "false"))
 #endif
 }
 
 void Settings::readBrightness()
 {
-    TRC_I_FUNC
-    RecursiveMutexGuard g(coinsMutex);
+    TraceFunction;
+    RecursiveMutexGuard(coinsMutex);
     if (SPIFFS.exists(BRIGHTNESS_FILE)) {
         File file;
         file = SPIFFS.open(BRIGHTNESS_FILE, "r");
         if (file) {
-            TRC_I_PRINTLN("Read brightness: " BRIGHTNESS_FILE);
+            TraceIPrintln("Read brightness: " BRIGHTNESS_FILE);
             StaticJsonDocument<JSON_DOCUMENT_BRIGHTNESS_SIZE> doc;
             ReadBufferingStream bufferedFile { file, 64 };
 
-#if SERIAL_TRACE > 0
+#if TRACER > 1
             ReadLoggingStream loggingStream(bufferedFile, Serial);
             DeserializationError error = deserializeJson(doc, loggingStream);
 #else
@@ -205,8 +203,8 @@ void Settings::readBrightness()
 
 void Settings::setBrightness(uint8_t b)
 {
-    TRC_I_FUNC
-    RecursiveMutexGuard g(coinsMutex);
+    TraceFunction;
+    RecursiveMutexGuard(coinsMutex);
     if (b >= MIN_BRIGHTNESS
         && b <= std::numeric_limits<uint8_t>::max()) {
         m_brightness = b;

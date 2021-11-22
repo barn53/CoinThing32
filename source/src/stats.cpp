@@ -3,7 +3,7 @@
 #include "gecko.h"
 #include "http_json.h"
 #include "tasks.h"
-#include "trace.h"
+#include "tracer.h"
 
 #include <ArduinoJson.h>
 #include <SPIFFS.h>
@@ -32,6 +32,7 @@ RTC_NOINIT_ATTR uint32_t Stats::wifi_sta_connected;
 RTC_NOINIT_ATTR uint32_t Stats::wifi_sta_disconnected;
 
 RTC_NOINIT_ATTR time_t Stats::last_price_fetch;
+RTC_NOINIT_ATTR time_t Stats::last_chart_fetch;
 RTC_NOINIT_ATTR time_t Stats::last_wifi_connect;
 RTC_NOINIT_ATTR time_t Stats::last_wifi_disconnect;
 
@@ -44,7 +45,7 @@ Stats stats;
 
 void Stats::reset()
 {
-    RecursiveMutexGuard g(stats_sync_mutex);
+    RecursiveMutexGuard(stats_sync_mutex);
     timezone.clear();
     utc_time_start = 0;
     raw_offset = 0;
@@ -66,6 +67,7 @@ void Stats::reset()
     wifi_sta_disconnected = 0;
 
     last_price_fetch = 0;
+    last_chart_fetch = 0;
     last_wifi_connect = 0;
     last_wifi_disconnect = 0;
 
@@ -75,72 +77,73 @@ void Stats::reset()
 
 void Stats::inc_gecko_price_fetch()
 {
-    RecursiveMutexGuard g(stats_sync_mutex);
+    RecursiveMutexGuard(stats_sync_mutex);
     last_price_fetch = localTimestamp();
     ++gecko_price_fetch;
 }
 void Stats::inc_gecko_chart_fetch()
 {
-    RecursiveMutexGuard g(stats_sync_mutex);
+    RecursiveMutexGuard(stats_sync_mutex);
+    last_chart_fetch = localTimestamp();
     ++gecko_chart_fetch;
 }
 void Stats::inc_gecko_price_fetch_fail()
 {
-    RecursiveMutexGuard g(stats_sync_mutex);
+    RecursiveMutexGuard(stats_sync_mutex);
     ++gecko_price_fetch_fail;
 }
 void Stats::inc_gecko_chart_fetch_fail()
 {
-    RecursiveMutexGuard g(stats_sync_mutex);
+    RecursiveMutexGuard(stats_sync_mutex);
     ++gecko_chart_fetch_fail;
 }
 void Stats::inc_time_fetch()
 {
-    RecursiveMutexGuard g(stats_sync_mutex);
+    RecursiveMutexGuard(stats_sync_mutex);
     ++time_fetch;
 }
 void Stats::inc_time_fetch_fail()
 {
-    RecursiveMutexGuard g(stats_sync_mutex);
+    RecursiveMutexGuard(stats_sync_mutex);
     ++time_fetch_fail;
 }
 void Stats::inc_settings_change()
 {
-    RecursiveMutexGuard g(stats_sync_mutex);
+    RecursiveMutexGuard(stats_sync_mutex);
     ++settings_change;
 }
 void Stats::inc_server_requests()
 {
-    RecursiveMutexGuard g(stats_sync_mutex);
+    RecursiveMutexGuard(stats_sync_mutex);
     ++server_requests;
 }
 void Stats::inc_wifi_sta_connected()
 {
-    RecursiveMutexGuard g(stats_sync_mutex);
+    RecursiveMutexGuard(stats_sync_mutex);
     last_wifi_connect = localTimestamp();
     ++wifi_sta_connected;
 }
 void Stats::inc_wifi_sta_disconnected()
 {
-    RecursiveMutexGuard g(stats_sync_mutex);
+    RecursiveMutexGuard(stats_sync_mutex);
     last_wifi_disconnect = localTimestamp();
     ++wifi_sta_disconnected;
 }
 void Stats::inc_brownout_counter()
 {
-    RecursiveMutexGuard g(stats_sync_mutex);
+    RecursiveMutexGuard(stats_sync_mutex);
     ++brownout_counter;
 }
 void Stats::inc_crash_counter()
 {
-    RecursiveMutexGuard g(stats_sync_mutex);
+    RecursiveMutexGuard(stats_sync_mutex);
     ++crash_counter;
 }
 
 String Stats::toJson(bool withData)
 {
-    TRC_I_FUNC
-    RecursiveMutexGuard g(stats_sync_mutex);
+    TraceFunction;
+    RecursiveMutexGuard(stats_sync_mutex);
     String json("{");
 
     json += R"("network":{)";
@@ -181,6 +184,7 @@ String Stats::toJson(bool withData)
 
     json += R"(,"timestamps":{)";
     json += R"("last price fetch":")" + timeFromTimestamp(last_price_fetch) + R"(")";
+    json += R"(,"last chart fetch":")" + timeFromTimestamp(last_chart_fetch) + R"(")";
     json += R"(,"last wifi connect":")" + timeFromTimestamp(last_wifi_connect) + R"(")";
     json += R"(,"last wifi disconnect":")" + timeFromTimestamp(last_wifi_disconnect) + R"(")";
     json += "}"; // timestamps
@@ -251,13 +255,13 @@ String Stats::utcStart()
 
 bool Stats::fetchTimeAPI()
 {
-    TRC_I_FUNC
+    TraceFunction;
     DynamicJsonDocument doc(512);
     String url(F("https://www.timeapi.io/api/Time/current/zone?timeZone=UTC"));
-    TRC_I_PRINTLN(url);
+    TraceIPrintln(url);
 
     if (httpJson.read(url.c_str(), doc)) {
-        RecursiveMutexGuard g(stats_sync_mutex);
+        RecursiveMutexGuard(stats_sync_mutex);
         tm time;
         time.tm_year = (doc[F("year")].as<int>() - 1900) | 0;
         time.tm_mon = (doc[F("month")].as<int>() - 1) | 0;
@@ -272,7 +276,7 @@ bool Stats::fetchTimeAPI()
             return true;
         }
     } else {
-        TRC_I_PRINTLN("HTTP read failed!");
+        TraceIPrintln("HTTP read failed!");
     }
 
     inc_time_fetch_fail();
@@ -281,13 +285,13 @@ bool Stats::fetchTimeAPI()
 
 bool Stats::fetchWorldTimeAPI()
 {
-    TRC_I_FUNC
+    TraceFunction;
     DynamicJsonDocument doc(1024);
     String url(F("http://worldtimeapi.org/api/ip"));
-    TRC_I_PRINTLN(url);
+    TraceIPrintln(url);
 
     if (httpJson.readHTTP(url.c_str(), doc)) {
-        RecursiveMutexGuard g(stats_sync_mutex);
+        RecursiveMutexGuard(stats_sync_mutex);
         dst_offset = doc[F("dst_offset")] | 0;
         raw_offset = doc[F("raw_offset")] | 0;
         timezone = doc[F("timezone")] | "";
@@ -297,7 +301,7 @@ bool Stats::fetchWorldTimeAPI()
             return true;
         }
     } else {
-        TRC_I_PRINTLN("HTTP read failed!");
+        TraceIPrintln("HTTP read failed!");
     }
 
     inc_time_fetch_fail();

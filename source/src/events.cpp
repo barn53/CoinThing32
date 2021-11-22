@@ -1,7 +1,7 @@
 #include "events.h"
 #include "display.h"
 #include "gecko.h"
-#include "trace.h"
+#include "tracer.h"
 
 namespace cointhing {
 
@@ -17,7 +17,7 @@ int32_t eventIdWiFiReconnected { 192 };
 
 void createEventLoop()
 {
-    TRC_I_FUNC
+    TraceFunction;
     esp_event_loop_args_t loopArgs = {
         .queue_size = 5,
         .task_name = "cointhingEvent",
@@ -31,18 +31,19 @@ void createEventLoop()
 
 void registerEventHandler()
 {
-    TRC_I_FUNC
+    TraceFunction;
     esp_event_handler_register_with(
         loopHandle, COINTHING_EVENT_BASE, ESP_EVENT_ANY_ID, [](void* event_handler_arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
-            TRC_I_FUNC
-            TRC_I_PRINTF("Event: %s, id: %u data: %s\n", (const char*)event_base, event_id, (const char*)event_data);
+            TraceFunction;
+            TraceIPrintf("Event: %s, id: %u data: %s\n", (const char*)event_base, event_id, (const char*)event_data);
         },
         nullptr);
 
     esp_event_handler_register_with(
         loopHandle, COINTHING_EVENT_BASE, eventIdSettingsChanged, [](void* event_handler_arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
             gecko.cancel();
-            xTaskNotify(geckoTaskHandle, static_cast<uint32_t>(GeckoNotificationType::settingsChanged), eSetValueWithOverwrite);
+            GeckoRemit type(GeckoRemit::settingsChanged);
+            xQueueSend(geckoQueue, static_cast<void*>(&type), portMAX_DELAY);
             xTaskNotify(displayTaskHandle, static_cast<uint32_t>(DisplayNotificationType::settingsChanged), eSetValueWithOverwrite);
         },
         nullptr);
@@ -51,7 +52,8 @@ void registerEventHandler()
         loopHandle, COINTHING_EVENT_BASE, eventIdWiFiReconnected, [](void* event_handler_arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
             gecko.cancel();
             settings.read();
-            xTaskNotify(geckoTaskHandle, static_cast<uint32_t>(GeckoNotificationType::settingsChanged), eSetValueWithOverwrite);
+            GeckoRemit type(GeckoRemit::settingsChanged);
+            xQueueSend(geckoQueue, static_cast<void*>(&type), portMAX_DELAY);
         },
         nullptr);
 }

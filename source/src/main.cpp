@@ -5,6 +5,7 @@
 #include "stats.h"
 #include "tasks.h"
 #include "timers.h"
+#include "tracer.h"
 #include "web_server.h"
 #include "wifi_utils.h"
 #include <Arduino.h>
@@ -19,7 +20,7 @@ SemaphoreHandle_t coinsMutex = xSemaphoreCreateRecursiveMutex();
 void setup()
 {
     Serial.begin(115200);
-    TRC_I_FUNC
+    TraceFunction;
 
     if (esp_reset_reason() == ESP_RST_POWERON) {
         stats.reset();

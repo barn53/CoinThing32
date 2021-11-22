@@ -125,9 +125,4 @@ String timeFromTimestamp(time_t timestamp)
     return String(utc);
 }
 
-bool mutexTaken(SemaphoreHandle_t mutex)
-{
-    return (xQueuePeek((QueueHandle_t)mutex, nullptr, 0) != pdTRUE);
-}
-
 } // namespace cointhing
