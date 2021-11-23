@@ -301,7 +301,7 @@ bool Stats::fetchWorldTimeAPI()
         timezone = doc[F("timezone")] | "";
         utc_time_start = (doc[F("unixtime")].as<uint32_t>() - (esp_timer_get_time() / 1000 / 1000)) | 0;
         if (timezone != "") {
-            TraceIPrintf("Set time: %s, timezone: %s", timeFromTimestamp(localTimestamp()).c_str(), timezone.c_str());
+            TraceIPrintf("Set time: %s, timezone: %s\n", timeFromTimestamp(localTimestamp()).c_str(), timezone.c_str());
             inc_time_fetch();
             return true;
         }
