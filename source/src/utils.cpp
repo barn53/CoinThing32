@@ -125,4 +125,7 @@ String timeFromTimestamp(time_t timestamp)
     return String(utc);
 }
 
+uint32_t MutexGuard_::counter = 0;
+uint32_t RecursiveMutexGuard_::counter = 0;
+
 } // namespace cointhing

@@ -24,11 +24,13 @@ public:
         , m_function(function)
     {
         xSemaphoreTake(m_guard, portMAX_DELAY);
-        TraceNIPrintf("+ take mutex %s @ %s() @ %s:%u\n", m_name, m_function, file, line);
+        ++counter;
+        m_counter = counter;
+        TraceNIPrintf("+ take mutex %s[%u] @ %s() @ %s:%u\n", m_name, m_counter, m_function, file, line);
     }
     ~MutexGuard_()
     {
-        TraceNIPrintf("- give mutex %s @ %s()\n", m_name, m_function);
+        TraceNIPrintf("- give mutex %s[%u] @ %s()\n", m_name, m_counter, m_function);
         xSemaphoreGive(m_guard);
     }
 
@@ -36,6 +38,8 @@ private:
     SemaphoreHandle_t m_guard;
     const char* m_name;
     const char* m_function;
+    uint32_t m_counter;
+    static uint32_t counter;
 };
 
 class RecursiveMutexGuard_ {
@@ -46,11 +50,13 @@ public:
         , m_function(function)
     {
         xSemaphoreTakeRecursive(m_guard, portMAX_DELAY);
-        TraceNIPrintf("+ take recursive mutex %s @ %s() @ %s:%u\n", m_name, m_function, file, line);
+        ++counter;
+        m_counter = counter;
+        TraceNIPrintf("+ take recursive mutex %s[%u] @ %s() @ %s:%u\n", m_name, m_counter, m_function, file, line);
     }
     ~RecursiveMutexGuard_()
     {
-        TraceNIPrintf("- give recursive mutex %s @ %s()\n", m_name, m_function);
+        TraceNIPrintf("- give recursive mutex %s[%u] @ %s()\n", m_name, m_counter, m_function);
         xSemaphoreGiveRecursive(m_guard);
     }
 
@@ -58,6 +64,8 @@ private:
     SemaphoreHandle_t m_guard;
     const char* m_name;
     const char* m_function;
+    uint32_t m_counter;
+    static uint32_t counter;
 };
 
 #define MutexGuard(m) \
