@@ -124,8 +124,10 @@ bool handleAction(AsyncWebServerRequest* request)
         WiFi.setSleep(WIFI_PS_MAX_MODEM);
         return true;
     } else if (path == F("/crash")) {
+        request->send(200, F("text/plain"), F("1"));
+        xTaskDelay(500);
         auto i(7 / 0);
-        return false;
+        return true;
         // } else if (path == F("/action/reset/esp")) {
         //     return handleResetESP();
         // } else if (path == F("/action/reset/settings")) {
