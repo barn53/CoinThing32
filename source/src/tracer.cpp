@@ -57,7 +57,8 @@ void Tracer::indent(bool duration)
     Serial.printf("%17s", pcTaskGetTaskName(nullptr));
     Serial.print("@");
     Serial.print(xPortGetCoreID());
-    Serial.print(" ");
+    Serial.print(":");
+    Serial.printf("%-3u", uxTaskPriorityGet(nullptr));
     auto d = depth();
     for (int i = 0; i < d; ++i) {
         Serial.print("|   ");

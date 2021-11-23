@@ -46,6 +46,8 @@ void wifiWake()
 void wifiEventHandler(system_event_id_t event)
 {
     TraceFunction;
+    TraceIPrintf("System event: %u\n", event);
+
     switch (event) {
     case SYSTEM_EVENT_STA_CONNECTED:
         stats.inc_wifi_sta_connected();
@@ -83,7 +85,6 @@ void setupWiFi()
         delay(100);
     }
 
-    TracePrintln("");
     TraceIPrintln("Connected");
     TraceIPrintf(" IP address: %s\n", WiFi.localIP().toString().c_str());
     TraceIPrintf(" Hostname: %s\n", WiFi.getHostname());
