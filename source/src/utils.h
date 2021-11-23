@@ -16,6 +16,8 @@ void formatNumber(float n, String& s, NumberFormat format, bool forceSign, bool 
 
 String timeFromTimestamp(time_t timestamp);
 
+#if TRACER > 0
+
 class MutexGuard_ {
 public:
     MutexGuard_(SemaphoreHandle_t mutex, const char* name, const char* file, const char* function, uint32_t line)
@@ -36,6 +38,7 @@ public:
 
 private:
     SemaphoreHandle_t m_guard;
+
     const char* m_name;
     const char* m_function;
     uint32_t m_counter;
@@ -62,6 +65,7 @@ public:
 
 private:
     SemaphoreHandle_t m_guard;
+
     const char* m_name;
     const char* m_function;
     uint32_t m_counter;
@@ -73,5 +77,47 @@ private:
 
 #define RecursiveMutexGuard(m) \
     RecursiveMutexGuard_ __g_##m(m, #m, __FUNCTION__, __FILE__, __LINE__);
+
+#else
+
+class MutexGuard_ {
+public:
+    MutexGuard_(SemaphoreHandle_t mutex)
+        : m_guard(mutex)
+    {
+        xSemaphoreTake(m_guard, portMAX_DELAY);
+    }
+    ~MutexGuard_()
+    {
+        xSemaphoreGive(m_guard);
+    }
+
+private:
+    SemaphoreHandle_t m_guard;
+};
+
+class RecursiveMutexGuard_ {
+public:
+    RecursiveMutexGuard_(SemaphoreHandle_t recursiveMutex)
+        : m_guard(recursiveMutex)
+    {
+        xSemaphoreTakeRecursive(m_guard, portMAX_DELAY);
+    }
+    ~RecursiveMutexGuard_()
+    {
+        xSemaphoreGiveRecursive(m_guard);
+    }
+
+private:
+    SemaphoreHandle_t m_guard;
+};
+
+#define MutexGuard(m) \
+    MutexGuard_ __g_##m(m);
+
+#define RecursiveMutexGuard(m) \
+    RecursiveMutexGuard_ __g_##m(m);
+
+#endif
 
 } // namespace cointhing

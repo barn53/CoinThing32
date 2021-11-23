@@ -34,6 +34,7 @@ public:
 
     static time_t get_last_price_fetch() { return last_price_fetch; }
     static time_t get_last_chart_fetch() { return last_chart_fetch; }
+    static time_t get_last_time_fetch() { return last_time_fetch; }
     static time_t get_last_wifi_connect() { return last_wifi_connect; }
     static time_t get_last_wifi_disconnect() { return last_wifi_disconnect; }
 
@@ -62,6 +63,7 @@ private:
 
     static time_t last_price_fetch;
     static time_t last_chart_fetch;
+    static time_t last_time_fetch;
     static time_t last_wifi_connect;
     static time_t last_wifi_disconnect;
 
