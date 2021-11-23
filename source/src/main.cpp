@@ -19,9 +19,6 @@ SemaphoreHandle_t coinsMutex = xSemaphoreCreateRecursiveMutex();
 
 void setup()
 {
-    Serial.begin(115200);
-    TraceFunction;
-
     if (esp_reset_reason() == ESP_RST_POWERON) {
         stats.reset();
     } else if (esp_reset_reason() == ESP_RST_BROWNOUT) {
@@ -30,7 +27,12 @@ void setup()
         stats.inc_crash_counter();
     }
 
+    Serial.begin(115200);
     SPIFFS.begin();
+
+    TraceFunction;
+
+    createHeartbeatTask();
 
     createEventLoop();
     registerEventHandler();
@@ -41,7 +43,6 @@ void setup()
 
     createGeckoTask();
     createDisplayTask();
-    createHeartbeatTask();
 
     createTimers();
 
