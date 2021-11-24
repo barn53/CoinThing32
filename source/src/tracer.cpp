@@ -5,6 +5,7 @@
 namespace Tracer {
 
 std::map<TaskHandle_t, uint32_t> Tracer::taskDepth;
+uint32_t Tracer::counter = 0;
 SemaphoreHandle_t syncMutex = xSemaphoreCreateRecursiveMutex();
 
 Tracer::Tracer(const char* function, const char* file, uint32_t line)
@@ -14,6 +15,8 @@ Tracer::Tracer(const char* function, const char* file, uint32_t line)
 {
     xSemaphoreTakeRecursive(syncMutex, portMAX_DELAY);
     m_millis = millis();
+    ++counter;
+    m_counter = counter;
     indent(false);
     functionName(true);
 
@@ -25,6 +28,7 @@ Tracer::Tracer(const char* function, const char* file, uint32_t line)
 Tracer::Tracer()
 {
     xSemaphoreTakeRecursive(syncMutex, portMAX_DELAY);
+    m_counter = 0;
     xSemaphoreGiveRecursive(syncMutex);
 }
 
@@ -42,13 +46,13 @@ Tracer::~Tracer()
 
 void Tracer::indent(bool duration)
 {
-    String prefix("[");
+    String prefix("{");
     prefix += String(millis() / 1000);
-    prefix += "] ";
+    prefix += "} ";
     if (m_millis != 0 && duration) {
-        prefix += "[";
+        prefix += "{";
         prefix += String((millis() - m_millis) / 1000);
-        prefix += "] ";
+        prefix += "} ";
     }
     while (prefix.length() < 12) {
         prefix += " ";
@@ -68,9 +72,9 @@ void Tracer::indent(bool duration)
 void Tracer::functionName(bool call)
 {
     if (call) {
-        Serial.print("> ");
+        Serial.printf(">[%u] ", m_counter);
     } else {
-        Serial.print("< ");
+        Serial.printf("<[%u] ", m_counter);
     }
     Serial.print(m_function);
     Serial.print(" @ ");

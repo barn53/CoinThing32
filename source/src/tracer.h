@@ -33,8 +33,10 @@ struct Tracer {
     String m_file { 0 };
     uint32_t m_line { 0 };
     uint32_t m_millis { 0 };
+    uint32_t m_counter;
 
     static std::map<TaskHandle_t, uint32_t> taskDepth;
+    static uint32_t counter;
 };
 
 extern SemaphoreHandle_t syncMutex;
