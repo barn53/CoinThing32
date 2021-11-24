@@ -55,11 +55,11 @@ public:
         xSemaphoreTakeRecursive(m_guard, portMAX_DELAY);
         ++counter;
         m_counter = counter;
-        TraceNIPrintf("+ take recursive mutex %s[%u] @ %s() @ %s:%u\n", m_name, m_counter, m_function, file, line);
+        TraceNIPrintf("+[%u] take recursive mutex %s @ %s() @ %s:%u\n", m_counter, m_name, m_function, file, line);
     }
     ~RecursiveMutexGuard_()
     {
-        TraceNIPrintf("- give recursive mutex %s[%u] @ %s()\n", m_name, m_counter, m_function);
+        TraceNIPrintf("-[%u] give recursive mutex %s @ %s()\n", m_counter, m_name, m_function);
         xSemaphoreGiveRecursive(m_guard);
     }
 
