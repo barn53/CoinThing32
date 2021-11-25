@@ -22,6 +22,7 @@ void createHousekeepingTask()
                 }
                 if (minutes % 1 == 0) {
                     TraceNIPrintln(stats.toJson(false));
+                    TraceNIPrintf("WiFi.status(): %u\n", WiFi.status());
                 }
                 ++minutes;
                 vTaskDelay(60 * 1000);

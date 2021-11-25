@@ -54,9 +54,12 @@ void Display::show() const
     tft.loadFont(F("NotoSans-Regular20"));
 
     const auto& geckoSettings(gecko.getSettings());
+    TraceIPos;
     const auto& coinPrices(gecko.getCoinPrices()[m_display_coin_index]);
-
+    TraceIPos;
     String msg(geckoSettings.name(m_display_coin_index));
+    TraceIPos;
+
     int16_t msgY(10);
     tft.setCursor(0, msgY);
     msg += ": ";

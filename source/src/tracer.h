@@ -81,6 +81,13 @@ extern SemaphoreHandle_t syncMutex;
     __t.printf(f, __VA_ARGS__);                                \
     xSemaphoreGiveRecursive(Tracer::syncMutex);
 
+#define TraceIPos                                                                             \
+    xSemaphoreTakeRecursive(Tracer::syncMutex, portMAX_DELAY);                                \
+    __t.indent(true);                                                                         \
+    Serial.printf("%s [%u] @ %s:%u", __PRETTY_FUNCTION__, __t.m_counter, __FILE__, __LINE__); \
+    Serial.println();                                                                         \
+    xSemaphoreGiveRecursive(Tracer::syncMutex);
+
 // Trace functions without a preceeding TraceFunction
 #define TraceNPrint(x)                                         \
     xSemaphoreTakeRecursive(Tracer::syncMutex, portMAX_DELAY); \
@@ -123,6 +130,14 @@ extern SemaphoreHandle_t syncMutex;
     __t.printf(f, __VA_ARGS__);                                \
     xSemaphoreGiveRecursive(Tracer::syncMutex);
 
+#define TraceNIPos                                                        \
+    xSemaphoreTakeRecursive(Tracer::syncMutex, portMAX_DELAY);            \
+    Tracer::Tracer __t;                                                   \
+    __t.indent(true);                                                     \
+    Serial.printf("%s @ %s:%u", __PRETTY_FUNCTION__, __FILE__, __LINE__); \
+    Serial.println();                                                     \
+    xSemaphoreGiveRecursive(Tracer::syncMutex);
+
 #else
 
 #define TraceFunction
@@ -138,9 +153,11 @@ extern SemaphoreHandle_t syncMutex;
 #define TraceIPrint(x)
 #define TraceIPrintln(x)
 #define TraceIPrintf(f, ...)
+#define TraceIPos
 
 #define TraceNIPrint(x)
 #define TraceNIPrintln(x)
 #define TraceNIPrintf(f, ...)
+#define TraceNIPos
 
 #endif

@@ -87,13 +87,15 @@ void Gecko::fetchPrices()
             }
             redo = false;
             stats.inc_gecko_price_fetch();
+            esp_event_post_to(loopHandle, COINTHING_EVENT_BASE, eventIdAllPricesUpdated, (void*)__PRETTY_FUNCTION__, strlen(__PRETTY_FUNCTION__) + 1, 0);
         } else {
             stats.inc_gecko_price_fetch_fail();
             TraceIPrintln("HTTP read failed!");
+            if (WiFi.status() != WL_CONNECTED) {
+                redo = false;
+            }
         }
     } while (redo);
-
-    esp_event_post_to(loopHandle, COINTHING_EVENT_BASE, eventIdAllPricesUpdated, (void*)__PRETTY_FUNCTION__, strlen(__PRETTY_FUNCTION__) + 1, 0);
 }
 
 void Gecko::fetchCharts()
@@ -103,6 +105,7 @@ void Gecko::fetchCharts()
     filter["prices"] = true;
     DynamicJsonDocument doc(12288);
     String currency1(m_settings.currency1Lower());
+    size_t successful(0);
     for (const auto& coin : m_settings.coins()) {
         String url(F("https://api.coingecko.com/api/v3/coins/"));
         url += coin.id;
@@ -128,15 +131,25 @@ void Gecko::fetchCharts()
                 }
                 redo = false;
                 stats.inc_gecko_chart_fetch();
+                ++successful;
                 esp_event_post_to(loopHandle, COINTHING_EVENT_BASE, eventIdChartUpdated, (void*)coin.id.c_str(), coin.id.length() + 1, 0);
             } else {
                 stats.inc_gecko_chart_fetch_fail();
                 TraceIPrintln("HTTP read failed!");
+                if (WiFi.status() != WL_CONNECTED) {
+                    redo = false;
+                }
             }
         } while (redo);
+
+        if (WiFi.status() != WL_CONNECTED) {
+            break;
+        }
     }
 
-    esp_event_post_to(loopHandle, COINTHING_EVENT_BASE, eventIdAllChartsUpdated, (void*)__PRETTY_FUNCTION__, strlen(__PRETTY_FUNCTION__) + 1, 0);
+    if (successful == m_settings.coins().size()) {
+        esp_event_post_to(loopHandle, COINTHING_EVENT_BASE, eventIdAllChartsUpdated, (void*)__PRETTY_FUNCTION__, strlen(__PRETTY_FUNCTION__) + 1, 0);
+    }
 }
 
 String Gecko::toJson() const
