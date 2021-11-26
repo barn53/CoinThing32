@@ -14,6 +14,21 @@ Display::Display()
 {
 }
 
+void Display::begin() const
+{
+    tft.begin();
+    tft.setRotation(0); // 0 & 2 Portrait. 1 & 3 landscape
+    tft.setTextWrap(false);
+
+    display.clear();
+    tft.setTextColor(TFT_WHITE, TFT_BLACK);
+    tft.loadFont(F("NotoSans-Regular20"));
+    String msg("ConThing 2\"");
+    tft.setCursor((TFT_WIDTH - tft.textWidth(msg)) / 2, 100);
+    tft.print(msg);
+    tft.unloadFont();
+}
+
 void Display::clear() const
 {
     tft.fillScreen(TFT_BLACK);
@@ -54,11 +69,8 @@ void Display::show() const
     tft.loadFont(F("NotoSans-Regular20"));
 
     const auto& geckoSettings(gecko.getSettings());
-    TraceIPos;
     const auto& coinPrices(gecko.getCoinPrices()[m_display_coin_index]);
-    TraceIPos;
     String msg(geckoSettings.name(m_display_coin_index));
-    TraceIPos;
 
     int16_t msgY(10);
     tft.setCursor(0, msgY);
@@ -115,7 +127,7 @@ void Display::show() const
     msgY += 30;
     tft.setCursor(0, msgY);
     msg = "lwc: ";
-    msg += timeFromTimestamp(stats.get_last_wifi_connect());
+    msg += timeFromTimestamp(stats.get_last_wifi_got_ip());
     tft.fillRect(tft.textWidth(msg) - 5, msgY, TFT_WIDTH - (tft.textWidth(msg) - 5), 20, TFT_BLACK);
     tft.print(msg);
 
@@ -149,13 +161,6 @@ TaskHandle_t displayTaskHandle;
 
 void displayTask(void*)
 {
-
-    tft.begin();
-    tft.setRotation(0); // 0 & 2 Portrait. 1 & 3 landscape
-    tft.setTextWrap(false);
-
-    display.clear();
-
     DisplayNotificationType notificationType;
     while (true) {
         if (xTaskNotifyWait(0, 0xffffffff, reinterpret_cast<uint32_t*>(&notificationType), portMAX_DELAY)) {

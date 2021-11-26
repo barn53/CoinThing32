@@ -27,16 +27,16 @@ void setup()
         stats.inc_crash_counter();
     }
 
-    Serial.begin(115200);
-    SPIFFS.begin();
-
-    TraceFunction;
-
     createHeartbeatTask();
 
-    createEventLoop();
-    registerEventHandler();
+    Serial.begin(115200);
+    TraceFunction;
 
+    SPIFFS.begin();
+
+    display.begin();
+
+    createEvents();
     setupWiFi();
 
     createHousekeepingTask();
@@ -45,10 +45,7 @@ void setup()
     createDisplayTask();
 
     createTimers();
-
     createServer();
-
-    settings.read();
 }
 
 void loop()

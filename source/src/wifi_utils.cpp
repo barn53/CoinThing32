@@ -46,21 +46,18 @@ void wifiWake()
 void wifiEventHandler(system_event_id_t event)
 {
     TraceFunction;
-    TraceIPrintf("System event: %u\n", event);
+    TraceIPrintf("System (WiFi) event: %u\n", event);
 
     switch (event) {
-    case SYSTEM_EVENT_STA_CONNECTED:
-        stats.inc_wifi_sta_connected();
+    case SYSTEM_EVENT_STA_GOT_IP:
+        stats.inc_wifi_got_ip();
+        esp_event_post_to(loopHandle, COINTHING_EVENT_BASE, eventIdWiFiGotIP, (void*)__PRETTY_FUNCTION__, strlen(__PRETTY_FUNCTION__) + 1, 0);
+        TraceIPrintf("Got IP address: %s\n", WiFi.localIP().toString().c_str());
         break;
     case SYSTEM_EVENT_STA_DISCONNECTED:
         stats.inc_wifi_sta_disconnected();
-        TraceIPrint("Disconnected - try to reconnect ");
-        while (WiFi.status() != WL_CONNECTED) {
-            TracePrint(".");
-            WiFi.reconnect();
-            delay(500);
-        }
-        esp_event_post_to(loopHandle, COINTHING_EVENT_BASE, eventIdWiFiReconnected, (void*)__PRETTY_FUNCTION__, strlen(__PRETTY_FUNCTION__) + 1, 0);
+        esp_event_post_to(loopHandle, COINTHING_EVENT_BASE, eventIdWiFiDisconnected, (void*)__PRETTY_FUNCTION__, strlen(__PRETTY_FUNCTION__) + 1, 0);
+        TraceIPrintln("WiFi disconnected");
         break;
     default:
         break;

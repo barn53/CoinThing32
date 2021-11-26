@@ -17,13 +17,13 @@ void createHousekeepingTask()
         [](void*) {
             uint32_t minutes(0);
             while (true) {
+
                 if (minutes % 60 == 0) {
                     stats.fetchWorldTimeAPI();
                 }
-                if (minutes % 1 == 0) {
-                    TraceNIPrintln(stats.toJson(false));
-                    TraceNIPrintf("WiFi.status(): %u\n", WiFi.status());
-                }
+
+                TraceNIPrintln(stats.toJson(false));
+
                 ++minutes;
                 vTaskDelay(60 * 1000);
             }

@@ -12,9 +12,10 @@ extern int32_t eventIdAllPricesUpdated;
 extern int32_t eventIdChartUpdated;
 extern int32_t eventIdAllChartsUpdated;
 extern int32_t eventIdSettingsChanged;
-extern int32_t eventIdWiFiReconnected;
+extern int32_t eventIdWiFiDisconnected;
+extern int32_t eventIdWiFiGotIP;
 
-void createEventLoop();
+void createEvents();
 void registerEventHandler();
 
 } // namespace cointhing

@@ -13,20 +13,23 @@ int32_t eventIdAllPricesUpdated { 42 };
 int32_t eventIdChartUpdated { 53 };
 int32_t eventIdAllChartsUpdated { 55 };
 int32_t eventIdSettingsChanged { 68 };
-int32_t eventIdWiFiReconnected { 192 };
+int32_t eventIdWiFiDisconnected { 191 };
+int32_t eventIdWiFiGotIP { 192 };
 
-void createEventLoop()
+void createEvents()
 {
     TraceFunction;
     esp_event_loop_args_t loopArgs = {
         .queue_size = 5,
         .task_name = "cointhingEvent",
         .task_priority = 0,
-        .task_stack_size = 2048,
+        .task_stack_size = 4096,
         .task_core_id = 0
     };
 
     esp_event_loop_create(&loopArgs, &loopHandle);
+
+    registerEventHandler();
 }
 
 void registerEventHandler()
@@ -49,11 +52,9 @@ void registerEventHandler()
         nullptr);
 
     esp_event_handler_register_with(
-        loopHandle, COINTHING_EVENT_BASE, eventIdWiFiReconnected, [](void* event_handler_arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
+        loopHandle, COINTHING_EVENT_BASE, eventIdWiFiGotIP, [](void* event_handler_arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
             gecko.cancel();
             settings.read();
-            GeckoRemit type(GeckoRemit::settingsChanged);
-            xQueueSend(geckoQueue, static_cast<void*>(&type), portMAX_DELAY);
         },
         nullptr);
 }

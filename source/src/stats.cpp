@@ -28,13 +28,13 @@ RTC_NOINIT_ATTR uint32_t Stats::settings_change;
 
 RTC_NOINIT_ATTR uint32_t Stats::server_requests;
 
-RTC_NOINIT_ATTR uint32_t Stats::wifi_sta_connected;
+RTC_NOINIT_ATTR uint32_t Stats::wifi_got_ip;
 RTC_NOINIT_ATTR uint32_t Stats::wifi_sta_disconnected;
 
 RTC_NOINIT_ATTR time_t Stats::last_price_fetch;
 RTC_NOINIT_ATTR time_t Stats::last_chart_fetch;
 RTC_NOINIT_ATTR time_t Stats::last_time_fetch;
-RTC_NOINIT_ATTR time_t Stats::last_wifi_connect;
+RTC_NOINIT_ATTR time_t Stats::last_wifi_got_ip;
 RTC_NOINIT_ATTR time_t Stats::last_wifi_disconnect;
 
 RTC_NOINIT_ATTR uint32_t Stats::brownout_counter;
@@ -64,13 +64,13 @@ void Stats::reset()
 
     server_requests = 0;
 
-    wifi_sta_connected = 0;
+    wifi_got_ip = 0;
     wifi_sta_disconnected = 0;
 
     last_price_fetch = 0;
     last_chart_fetch = 0;
     last_time_fetch = 0;
-    last_wifi_connect = 0;
+    last_wifi_got_ip = 0;
     last_wifi_disconnect = 0;
 
     brownout_counter = 0;
@@ -120,11 +120,11 @@ void Stats::inc_server_requests()
     RecursiveMutexGuard(stats_sync_mutex);
     ++server_requests;
 }
-void Stats::inc_wifi_sta_connected()
+void Stats::inc_wifi_got_ip()
 {
     RecursiveMutexGuard(stats_sync_mutex);
-    last_wifi_connect = localTimestamp();
-    ++wifi_sta_connected;
+    last_wifi_got_ip = localTimestamp();
+    ++wifi_got_ip;
 }
 void Stats::inc_wifi_sta_disconnected()
 {
@@ -179,7 +179,7 @@ String Stats::toJson(bool withData)
     json += R"(,"time fetch fail":)" + String(time_fetch_fail);
     json += R"(,"settings change":)" + String(settings_change);
     json += R"(,"server requests":)" + String(server_requests);
-    json += R"(,"wifi sta connected":)" + String(wifi_sta_connected);
+    json += R"(,"wifi got ip":)" + String(wifi_got_ip);
     json += R"(,"wifi sta disconnected":)" + String(wifi_sta_disconnected);
     json += R"(,"brownouts":)" + String(brownout_counter);
     json += R"(,"crashes":)" + String(crash_counter);
@@ -189,7 +189,7 @@ String Stats::toJson(bool withData)
     json += R"("last price fetch":")" + timeFromTimestamp(last_price_fetch) + R"(")";
     json += R"(,"last chart fetch":")" + timeFromTimestamp(last_chart_fetch) + R"(")";
     json += R"(,"last time fetch":")" + timeFromTimestamp(last_time_fetch) + R"(")";
-    json += R"(,"last wifi connect":")" + timeFromTimestamp(last_wifi_connect) + R"(")";
+    json += R"(,"last wifi got ip":")" + timeFromTimestamp(last_wifi_got_ip) + R"(")";
     json += R"(,"last wifi disconnect":")" + timeFromTimestamp(last_wifi_disconnect) + R"(")";
     json += "}"; // timestamps
 
@@ -200,6 +200,7 @@ String Stats::toJson(bool withData)
     json += R"(,"geckoTask":)" + String(uxTaskGetStackHighWaterMark(geckoTaskHandle));
     json += R"(,"housekeepingTask":)" + String(uxTaskGetStackHighWaterMark(housekeepingTaskHandle));
     json += R"(,"heartbeatTask":)" + String(uxTaskGetStackHighWaterMark(heartbeatTaskHandle));
+    // json += R"(,"cointhingEvent":)" + String(uxTaskGetStackHighWaterMark(xTaskGetHandle("blah")));
     json += "}"; // task high water marks
 
     json += R"(,"heap":{)";

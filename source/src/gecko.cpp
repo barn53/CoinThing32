@@ -68,7 +68,7 @@ void Gecko::fetchPrices()
     do {
         if (httpJson.read(url.c_str(), doc)) {
             if (m_cancel.load()) {
-                TraceIPrintln("Gecko::fetchPrices() cancelled");
+                TraceIPrintln("fetch loop cancelled");
                 return;
             }
             RecursiveMutexGuard(geckoSyncMutex);
@@ -118,7 +118,7 @@ void Gecko::fetchCharts()
         do {
             if (httpJson.read(url.c_str(), doc)) {
                 if (m_cancel.load()) {
-                    TraceIPrintln("Gecko::fetchCharts() cancelled");
+                    TraceIPrintln("fetch loop cancelled");
                     return;
                 }
                 RecursiveMutexGuard(geckoSyncMutex);

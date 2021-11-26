@@ -15,6 +15,7 @@ public:
     void resetCoinId();
     void nextCoinId();
 
+    void begin() const;
     void clear() const;
 
     void show() const;
