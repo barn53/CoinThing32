@@ -26,12 +26,24 @@ void Gecko::newSettings()
     TraceFunction;
     {
         RecursiveMutexGuard(geckoSyncMutex);
-        RecursiveMutexGuard(coinsMutex);
+        RecursiveMutexGuard(settingsMutex);
         m_settings = settings.coins();
         m_prices.clear();
         m_chart_data.clear();
-        m_cancel.store(false);
+        unCancel();
     }
+}
+
+void Gecko::cancel() const
+{
+    TraceFunction;
+    m_cancel = true;
+}
+
+void Gecko::unCancel() const
+{
+    TraceFunction;
+    m_cancel = false;
 }
 
 const std::vector<Gecko::CoinPrices>& Gecko::getCoinPrices() const
@@ -219,20 +231,21 @@ void geckoTask(void*)
 
     while (true) {
         if (xQueueReceive(geckoQueue, reinterpret_cast<void*>(&type), portMAX_DELAY)) {
-            TraceNIPrintf("Notification type: %u\n", static_cast<uint32_t>(type));
-            switch (type) {
-            case GeckoRemit::settingsChanged:
-                gecko.newSettings();
-                gecko.fetchPrices();
-                gecko.fetchCharts();
-                break;
-            case GeckoRemit::fetchPrices:
-                gecko.fetchPrices();
-                break;
-            case GeckoRemit::fetchCharts:
-                gecko.fetchCharts();
-                break;
-            }
+            TraceNIPrintf("Remit type: %u\n", static_cast<uint32_t>(type));
+                switch (type) {
+                case GeckoRemit::settingsChanged:
+                    gecko.newSettings();
+                    gecko.fetchPrices();
+                    gecko.fetchCharts();
+                    break;
+                case GeckoRemit::fetchPrices:
+                    gecko.fetchPrices();
+                    break;
+                case GeckoRemit::fetchCharts:
+                    gecko.fetchCharts();
+                    break;
+                }
+            gecko.unCancel();
         }
     }
 }

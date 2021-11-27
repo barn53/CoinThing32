@@ -115,7 +115,6 @@ public:
 
 private:
     void set(DynamicJsonDocument& doc, bool toFile);
-    void trace() const;
 
     GeckoSettings m_gecko;
     uint8_t m_brightness { std::numeric_limits<uint8_t>::max() };

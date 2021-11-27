@@ -14,11 +14,13 @@
 using namespace cointhing;
 
 namespace cointhing {
-SemaphoreHandle_t coinsMutex = xSemaphoreCreateRecursiveMutex();
+SemaphoreHandle_t settingsMutex = xSemaphoreCreateRecursiveMutex();
+std::atomic_bool readyFlag;
 } // namespace cointhing
 
 void setup()
 {
+    readyFlag = false;
     if (esp_reset_reason() == ESP_RST_POWERON) {
         stats.reset();
     } else if (esp_reset_reason() == ESP_RST_BROWNOUT) {

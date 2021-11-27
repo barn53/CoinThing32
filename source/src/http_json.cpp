@@ -6,7 +6,7 @@ namespace cointhing {
 
 HttpJson::HttpJson()
 {
-    m_mutex = xSemaphoreCreateRecursiveMutex();
+    m_http_mutex = xSemaphoreCreateRecursiveMutex();
     m_secure_client.setInsecure();
     m_http.useHTTP10(true); // stream is only available with HTTP1.0 (no chunked transfer)
     m_http.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
@@ -23,7 +23,7 @@ bool HttpJson::read(const char* url, DynamicJsonDocument& jsonDoc)
 bool HttpJson::read(const char* url, DynamicJsonDocument& jsonDoc, DynamicJsonDocument& jsonFilter)
 {
     TraceFunction;
-    RecursiveMutexGuard(m_mutex);
+    RecursiveMutexGuard(m_http_mutex);
     m_http.begin(m_secure_client, url);
     int httpCode = m_http.GET();
     if (httpCode > 0) {
@@ -45,7 +45,7 @@ bool HttpJson::read(const char* url, DynamicJsonDocument& jsonDoc, DynamicJsonDo
 bool HttpJson::readHTTP(const char* url, DynamicJsonDocument& jsonDoc)
 {
     TraceFunction;
-    RecursiveMutexGuard(m_mutex);
+    RecursiveMutexGuard(m_http_mutex);
     WiFiClient client;
     m_http.begin(client, url);
     int httpCode = m_http.GET();

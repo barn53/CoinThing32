@@ -1,5 +1,6 @@
 #include "tasks.h"
 #include "display.h"
+#include "events.h"
 #include "gecko.h"
 #include "main.h"
 #include "stats.h"
@@ -20,6 +21,9 @@ void createHousekeepingTask()
 
                 if (minutes % 60 == 0) {
                     stats.fetchWorldTimeAPI();
+                    if (!readyFlag) {
+                        esp_event_post_to(loopHandle, COINTHING_EVENT_BASE, eventIdStartCoinThing, (void*)__PRETTY_FUNCTION__, strlen(__PRETTY_FUNCTION__) + 1, 0);
+                    }
                 }
 
                 TraceNIPrintln(stats.toJson(false));

@@ -9,6 +9,7 @@ namespace Tracer {
 struct Tracer {
 
     Tracer(const char* function, const char* file, uint32_t line);
+    Tracer(const char* function, const char* signature, const char* file, uint32_t line);
     Tracer();
     ~Tracer();
 

@@ -7,9 +7,9 @@
 namespace cointhing {
 
 enum class GeckoRemit : uint32_t {
-    settingsChanged = (1 << 0),
-    fetchPrices = (1 << 1),
-    fetchCharts = (1 << 2),
+    settingsChanged = 1,
+    fetchPrices,
+    fetchCharts,
 };
 
 class Gecko {
@@ -37,7 +37,8 @@ public:
     void newSettings();
     const GeckoSettings& getSettings() const;
 
-    void cancel() const { m_cancel.store(true); }
+    void cancel() const;
+    void unCancel() const;
 
     String toJson() const;
 

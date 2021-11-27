@@ -1,1 +1,1 @@
-pio device monitor -b 115200 > serial_monitor.out 
+pio device monitor -b 115200 -f time --eol LF > serial_monitor.log
