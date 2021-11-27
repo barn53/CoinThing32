@@ -22,6 +22,12 @@ public:
     static void inc_gecko_chart_fetch();
     static void inc_gecko_price_fetch_fail();
     static void inc_gecko_chart_fetch_fail();
+
+    static void inc_finnhub_price_fetch();
+    static void inc_finnhub_chart_fetch();
+    static void inc_finnhub_price_fetch_fail();
+    static void inc_finnhub_chart_fetch_fail();
+
     static void inc_time_fetch();
     static void inc_time_fetch_fail();
     static void inc_settings_change();
@@ -32,8 +38,10 @@ public:
     static void inc_brownout_counter();
     static void inc_crash_counter();
 
-    static time_t get_last_price_fetch() { return last_price_fetch; }
-    static time_t get_last_chart_fetch() { return last_chart_fetch; }
+    static time_t get_last_gecko_price_fetch() { return last_gecko_price_fetch; }
+    static time_t get_last_gecko_chart_fetch() { return last_gecko_chart_fetch; }
+    static time_t get_last_finnhub_price_fetch() { return last_finnhub_price_fetch; }
+    static time_t get_last_finnhub_chart_fetch() { return last_finnhub_chart_fetch; }
     static time_t get_last_settings_change() { return last_settings_change; }
     static time_t get_last_time_fetch() { return last_time_fetch; }
     static time_t get_last_wifi_got_ip() { return last_wifi_got_ip; }
@@ -52,6 +60,11 @@ private:
     static uint32_t gecko_price_fetch_fail;
     static uint32_t gecko_chart_fetch_fail;
 
+    static uint32_t finnhub_price_fetch;
+    static uint32_t finnhub_chart_fetch;
+    static uint32_t finnhub_price_fetch_fail;
+    static uint32_t finnhub_chart_fetch_fail;
+
     static uint32_t time_fetch;
     static uint32_t time_fetch_fail;
 
@@ -62,8 +75,10 @@ private:
     static uint32_t wifi_got_ip;
     static uint32_t wifi_sta_disconnected;
 
-    static time_t last_price_fetch;
-    static time_t last_chart_fetch;
+    static time_t last_gecko_price_fetch;
+    static time_t last_gecko_chart_fetch;
+    static time_t last_finnhub_price_fetch;
+    static time_t last_finnhub_chart_fetch;
     static time_t last_settings_change;
     static time_t last_time_fetch;
     static time_t last_wifi_got_ip;

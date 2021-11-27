@@ -27,7 +27,7 @@ void Gecko::newSettings()
     {
         RecursiveMutexGuard(geckoSyncMutex);
         RecursiveMutexGuard(settingsMutex);
-        m_settings = settings.coins();
+        m_settings = settings.gecko();
         m_prices.clear();
         m_chart_data.clear();
         unCancel();
@@ -79,7 +79,7 @@ void Gecko::fetchPrices()
     bool redo(true);
     do {
         if (httpJson.read(url.c_str(), doc)) {
-            if (m_cancel.load()) {
+            if (m_cancel) {
                 TraceIPrintln("fetch loop cancelled");
                 return;
             }
@@ -99,7 +99,7 @@ void Gecko::fetchPrices()
             }
             redo = false;
             stats.inc_gecko_price_fetch();
-            esp_event_post_to(loopHandle, COINTHING_EVENT_BASE, eventIdAllPricesUpdated, (void*)__PRETTY_FUNCTION__, strlen(__PRETTY_FUNCTION__) + 1, 0);
+            esp_event_post_to(loopHandle, COINTHING_EVENT_BASE, eventIdAllGeckoPricesUpdated, (void*)__PRETTY_FUNCTION__, strlen(__PRETTY_FUNCTION__) + 1, 0);
         } else {
             stats.inc_gecko_price_fetch_fail();
             TraceIPrintln("HTTP read failed!");
@@ -129,7 +129,7 @@ void Gecko::fetchCharts()
         bool redo(true);
         do {
             if (httpJson.read(url.c_str(), doc)) {
-                if (m_cancel.load()) {
+                if (m_cancel) {
                     TraceIPrintln("fetch loop cancelled");
                     return;
                 }
@@ -144,7 +144,7 @@ void Gecko::fetchCharts()
                 redo = false;
                 stats.inc_gecko_chart_fetch();
                 ++successful;
-                esp_event_post_to(loopHandle, COINTHING_EVENT_BASE, eventIdChartUpdated, (void*)coin.id.c_str(), coin.id.length() + 1, 0);
+                esp_event_post_to(loopHandle, COINTHING_EVENT_BASE, eventIdGeckoChartUpdated, (void*)coin.id.c_str(), coin.id.length() + 1, 0);
             } else {
                 stats.inc_gecko_chart_fetch_fail();
                 TraceIPrintln("HTTP read failed!");
@@ -160,7 +160,7 @@ void Gecko::fetchCharts()
     }
 
     if (successful == m_settings.coins().size()) {
-        esp_event_post_to(loopHandle, COINTHING_EVENT_BASE, eventIdAllChartsUpdated, (void*)__PRETTY_FUNCTION__, strlen(__PRETTY_FUNCTION__) + 1, 0);
+        esp_event_post_to(loopHandle, COINTHING_EVENT_BASE, eventIdAllGeckoChartsUpdated, (void*)__PRETTY_FUNCTION__, strlen(__PRETTY_FUNCTION__) + 1, 0);
     }
 }
 
@@ -168,7 +168,7 @@ String Gecko::toJson() const
 {
     TraceFunction;
     RecursiveMutexGuard(geckoSyncMutex);
-    String json("{");
+    String json(R"("gecko":{)");
 
     json += R"("coins":[)";
     size_t counter(0);
@@ -181,12 +181,12 @@ String Gecko::toJson() const
         json += R"(,"id":")" + coin.id + R"(")";
 
         json += R"(,"price )" + m_settings.getCurrencies()[0].symbol + R"(":)" + m_prices[counter].priceCurrency1;
-        json += R"(,"24h change )" + m_settings.getCurrencies()[0].symbol + R"(":")" + String(m_prices[counter].change24hCurrency1) + R"(%")";
+        json += R"(,"24h change )" + m_settings.getCurrencies()[0].symbol + R"( %":)" + String(m_prices[counter].change24hCurrency1);
         json += R"(,"market capitalization )" + m_settings.getCurrencies()[0].symbol + R"(":)" + m_prices[counter].marketCapCurrency1;
         json += R"(,"24h volume )" + m_settings.getCurrencies()[0].symbol + R"(":)" + m_prices[counter].volume24hCurrency1;
 
         json += R"(,"price )" + m_settings.getCurrencies()[1].symbol + R"(":)" + m_prices[counter].priceCurrency2;
-        json += R"(,"24h change )" + m_settings.getCurrencies()[1].symbol + R"(":")" + String(m_prices[counter].change24hCurrency2) + R"(%")";
+        json += R"(,"24h change )" + m_settings.getCurrencies()[1].symbol + R"( %":)" + String(m_prices[counter].change24hCurrency2);
         json += R"(,"market capitalization )" + m_settings.getCurrencies()[1].symbol + R"(":)" + m_prices[counter].marketCapCurrency2;
         json += R"(,"24h volume )" + m_settings.getCurrencies()[1].symbol + R"(":)" + m_prices[counter].volume24hCurrency2;
 
@@ -216,7 +216,7 @@ String Gecko::toJson() const
     }
     json += ("]"); // charts
 
-    json += ("}"); // top level
+    json += ("}"); // gecko
     return json;
 }
 
@@ -232,19 +232,19 @@ void geckoTask(void*)
     while (true) {
         if (xQueueReceive(geckoQueue, reinterpret_cast<void*>(&type), portMAX_DELAY)) {
             TraceNIPrintf("Remit type: %u\n", static_cast<uint32_t>(type));
-                switch (type) {
-                case GeckoRemit::settingsChanged:
-                    gecko.newSettings();
-                    gecko.fetchPrices();
-                    gecko.fetchCharts();
-                    break;
-                case GeckoRemit::fetchPrices:
-                    gecko.fetchPrices();
-                    break;
-                case GeckoRemit::fetchCharts:
-                    gecko.fetchCharts();
-                    break;
-                }
+            switch (type) {
+            case GeckoRemit::settingsChanged:
+                gecko.newSettings();
+                gecko.fetchPrices();
+                gecko.fetchCharts();
+                break;
+            case GeckoRemit::fetchPrices:
+                gecko.fetchPrices();
+                break;
+            case GeckoRemit::fetchCharts:
+                gecko.fetchCharts();
+                break;
+            }
             gecko.unCancel();
         }
     }

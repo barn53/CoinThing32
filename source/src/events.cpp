@@ -1,5 +1,6 @@
 #include "events.h"
 #include "display.h"
+#include "finnhub.h"
 #include "gecko.h"
 #include "main.h"
 #include "tracer.h"
@@ -11,9 +12,15 @@ esp_event_loop_handle_t loopHandle;
 ESP_EVENT_DEFINE_BASE(COINTHING_EVENT_BASE)
 
 int32_t eventIdStartCoinThing { 33 };
-int32_t eventIdAllPricesUpdated { 42 };
-int32_t eventIdChartUpdated { 53 };
-int32_t eventIdAllChartsUpdated { 55 };
+
+int32_t eventIdAllGeckoPricesUpdated { 42 };
+int32_t eventIdGeckoChartUpdated { 53 };
+int32_t eventIdAllGeckoChartsUpdated { 55 };
+
+int32_t eventIdAllFinnhubPricesUpdated { 142 };
+int32_t eventIdFinnhubChartUpdated { 153 };
+int32_t eventIdAllFinnhubChartsUpdated { 155 };
+
 int32_t eventIdSettingsChanged { 68 };
 int32_t eventIdWiFiDisconnected { 191 };
 int32_t eventIdWiFiGotIP { 192 };
@@ -56,10 +63,21 @@ void registerEventHandler()
     esp_event_handler_register_with(
         loopHandle, COINTHING_EVENT_BASE, eventIdSettingsChanged, [](void* event_handler_arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
             if (readyFlag) {
-                gecko.cancel();
-                GeckoRemit type(GeckoRemit::settingsChanged);
-                xQueueSend(geckoQueue, static_cast<void*>(&type), portMAX_DELAY);
-                xTaskNotify(displayTaskHandle, static_cast<uint32_t>(DisplayNotificationType::settingsChanged), eSetValueWithOverwrite);
+                {
+                    xQueueReset(geckoQueue);
+                    gecko.cancel();
+                    GeckoRemit type(GeckoRemit::settingsChanged);
+                    xQueueSend(geckoQueue, static_cast<void*>(&type), 0);
+                }
+                {
+                    xQueueReset(finnhubQueue);
+                    finnhub.cancel();
+                    FinnhubRemit type(FinnhubRemit::settingsChanged);
+                    xQueueSend(finnhubQueue, static_cast<void*>(&type), 0);
+                }
+                {
+                    xTaskNotify(displayTaskHandle, static_cast<uint32_t>(DisplayNotificationType::settingsChanged), eSetValueWithOverwrite);
+                }
             }
         },
         nullptr);
@@ -68,6 +86,7 @@ void registerEventHandler()
         loopHandle, COINTHING_EVENT_BASE, eventIdWiFiGotIP, [](void* event_handler_arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
             if (readyFlag) {
                 gecko.cancel();
+                finnhub.cancel();
                 settings.read();
             }
         },

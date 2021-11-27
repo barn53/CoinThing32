@@ -1,5 +1,6 @@
 #include "timers.h"
 #include "display.h"
+#include "finnhub.h"
 #include "gecko.h"
 #include "main.h"
 #include "tasks.h"
@@ -11,21 +12,45 @@ void createTimers()
 {
     TraceFunction;
 
-    TimerHandle_t fetchPriceTimer(xTimerCreate("fetchPriceTimer", (20 * 1000) / portTICK_PERIOD_MS, pdTRUE, nullptr, [](TimerHandle_t xTimer) {
+    TimerHandle_t fetchGeckoPriceTimer(xTimerCreate("fetchGeckoPriceTimer", (20 * 1000) / portTICK_PERIOD_MS, pdTRUE, nullptr, [](TimerHandle_t xTimer) {
         if (readyFlag) {
+            TraceFunction;
+            TraceIPrintf("Gecko queue free spaces:   %u\n", uxQueueSpacesAvailable(geckoQueue));
             GeckoRemit type(GeckoRemit::fetchPrices);
             xQueueSend(geckoQueue, static_cast<void*>(&type), 0);
         }
     }));
-    xTimerStart(fetchPriceTimer, 0);
+    xTimerStart(fetchGeckoPriceTimer, 0);
 
-    TimerHandle_t fetchChartTimer(xTimerCreate("fetchChartTimer", (15 * 60 * 1000) / portTICK_PERIOD_MS, pdTRUE, nullptr, [](TimerHandle_t xTimer) {
+    TimerHandle_t fetchGeckoChartTimer(xTimerCreate("fetchGeckoChartTimer", (15 * 60 * 1000) / portTICK_PERIOD_MS, pdTRUE, nullptr, [](TimerHandle_t xTimer) {
         if (readyFlag) {
+            TraceFunction;
+            TraceIPrintf("Gecko queue free spaces:   %u\n", uxQueueSpacesAvailable(geckoQueue));
             GeckoRemit type(GeckoRemit::fetchCharts);
             xQueueSend(geckoQueue, static_cast<void*>(&type), 0);
         }
     }));
-    xTimerStart(fetchChartTimer, 0);
+    xTimerStart(fetchGeckoChartTimer, 0);
+
+    TimerHandle_t fetchFinnhubPriceTimer(xTimerCreate("fetchFinnhubPriceTimer", (20 * 1000) / portTICK_PERIOD_MS, pdTRUE, nullptr, [](TimerHandle_t xTimer) {
+        if (readyFlag) {
+            TraceFunction;
+            TraceIPrintf("Finnhub queue free spaces: %u\n", uxQueueSpacesAvailable(finnhubQueue));
+            FinnhubRemit type(FinnhubRemit::fetchPrices);
+            xQueueSend(finnhubQueue, static_cast<void*>(&type), 0);
+        }
+    }));
+    xTimerStart(fetchFinnhubPriceTimer, 0);
+
+    TimerHandle_t fetchFinnhubChartTimer(xTimerCreate("fetchFinnhubChartTimer", (15 * 60 * 1000) / portTICK_PERIOD_MS, pdTRUE, nullptr, [](TimerHandle_t xTimer) {
+        if (readyFlag) {
+            TraceFunction;
+            TraceIPrintf("Finnhub queue free spaces: %u\n", uxQueueSpacesAvailable(finnhubQueue));
+            FinnhubRemit type(FinnhubRemit::fetchCharts);
+            xQueueSend(finnhubQueue, static_cast<void*>(&type), 0);
+        }
+    }));
+    xTimerStart(fetchFinnhubChartTimer, 0);
 
     TimerHandle_t displayNextTimer(xTimerCreate("displayNextTimer", (2 * 1000) / portTICK_PERIOD_MS, pdTRUE, nullptr, [](TimerHandle_t xTimer) {
         if (readyFlag) {
@@ -33,6 +58,9 @@ void createTimers()
         }
     }));
     xTimerStart(displayNextTimer, 0);
+
+    // based on settings:
+    // xTimerChangePeriod()
 }
 
 } // namespace cointhing

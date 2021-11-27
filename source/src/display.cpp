@@ -120,7 +120,7 @@ void Display::show() const
     msgY += 30;
     tft.setCursor(0, msgY);
     msg = "lpf: ";
-    msg += timeFromTimestamp(stats.get_last_price_fetch());
+    msg += timeFromTimestamp(stats.get_last_gecko_price_fetch());
     tft.fillRect(tft.textWidth(msg) - 5, msgY, TFT_WIDTH - (tft.textWidth(msg) - 5), 20, TFT_BLACK);
     tft.print(msg);
 

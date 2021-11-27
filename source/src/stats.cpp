@@ -1,5 +1,6 @@
 #include "stats.h"
 #include "display.h"
+#include "finnhub.h"
 #include "gecko.h"
 #include "http_json.h"
 #include "tasks.h"
@@ -21,6 +22,11 @@ RTC_NOINIT_ATTR uint32_t Stats::gecko_chart_fetch;
 RTC_NOINIT_ATTR uint32_t Stats::gecko_price_fetch_fail;
 RTC_NOINIT_ATTR uint32_t Stats::gecko_chart_fetch_fail;
 
+RTC_NOINIT_ATTR uint32_t Stats::finnhub_price_fetch;
+RTC_NOINIT_ATTR uint32_t Stats::finnhub_chart_fetch;
+RTC_NOINIT_ATTR uint32_t Stats::finnhub_price_fetch_fail;
+RTC_NOINIT_ATTR uint32_t Stats::finnhub_chart_fetch_fail;
+
 RTC_NOINIT_ATTR uint32_t Stats::time_fetch;
 RTC_NOINIT_ATTR uint32_t Stats::time_fetch_fail;
 
@@ -31,8 +37,10 @@ RTC_NOINIT_ATTR uint32_t Stats::server_requests;
 RTC_NOINIT_ATTR uint32_t Stats::wifi_got_ip;
 RTC_NOINIT_ATTR uint32_t Stats::wifi_sta_disconnected;
 
-RTC_NOINIT_ATTR time_t Stats::last_price_fetch;
-RTC_NOINIT_ATTR time_t Stats::last_chart_fetch;
+RTC_NOINIT_ATTR time_t Stats::last_gecko_price_fetch;
+RTC_NOINIT_ATTR time_t Stats::last_gecko_chart_fetch;
+RTC_NOINIT_ATTR time_t Stats::last_finnhub_price_fetch;
+RTC_NOINIT_ATTR time_t Stats::last_finnhub_chart_fetch;
 RTC_NOINIT_ATTR time_t Stats::last_settings_change;
 RTC_NOINIT_ATTR time_t Stats::last_time_fetch;
 RTC_NOINIT_ATTR time_t Stats::last_wifi_got_ip;
@@ -58,6 +66,11 @@ void Stats::reset()
     gecko_price_fetch_fail = 0;
     gecko_chart_fetch_fail = 0;
 
+    finnhub_price_fetch = 0;
+    finnhub_chart_fetch = 0;
+    finnhub_price_fetch_fail = 0;
+    finnhub_chart_fetch_fail = 0;
+
     time_fetch = 0;
     time_fetch_fail = 0;
 
@@ -68,8 +81,10 @@ void Stats::reset()
     wifi_got_ip = 0;
     wifi_sta_disconnected = 0;
 
-    last_price_fetch = 0;
-    last_chart_fetch = 0;
+    last_gecko_price_fetch = 0;
+    last_gecko_chart_fetch = 0;
+    last_finnhub_price_fetch = 0;
+    last_finnhub_chart_fetch = 0;
     last_settings_change = 0;
     last_time_fetch = 0;
     last_wifi_got_ip = 0;
@@ -82,13 +97,13 @@ void Stats::reset()
 void Stats::inc_gecko_price_fetch()
 {
     RecursiveMutexGuard(stats_sync_mutex);
-    last_price_fetch = localTimestamp();
+    last_gecko_price_fetch = localTimestamp();
     ++gecko_price_fetch;
 }
 void Stats::inc_gecko_chart_fetch()
 {
     RecursiveMutexGuard(stats_sync_mutex);
-    last_chart_fetch = localTimestamp();
+    last_gecko_chart_fetch = localTimestamp();
     ++gecko_chart_fetch;
 }
 void Stats::inc_gecko_price_fetch_fail()
@@ -100,6 +115,28 @@ void Stats::inc_gecko_chart_fetch_fail()
 {
     RecursiveMutexGuard(stats_sync_mutex);
     ++gecko_chart_fetch_fail;
+}
+void Stats::inc_finnhub_price_fetch()
+{
+    RecursiveMutexGuard(stats_sync_mutex);
+    last_finnhub_price_fetch = localTimestamp();
+    ++finnhub_price_fetch;
+}
+void Stats::inc_finnhub_chart_fetch()
+{
+    RecursiveMutexGuard(stats_sync_mutex);
+    last_finnhub_chart_fetch = localTimestamp();
+    ++finnhub_chart_fetch;
+}
+void Stats::inc_finnhub_price_fetch_fail()
+{
+    RecursiveMutexGuard(stats_sync_mutex);
+    ++finnhub_price_fetch_fail;
+}
+void Stats::inc_finnhub_chart_fetch_fail()
+{
+    RecursiveMutexGuard(stats_sync_mutex);
+    ++finnhub_chart_fetch_fail;
 }
 void Stats::inc_time_fetch()
 {
@@ -178,6 +215,10 @@ String Stats::toJson(bool withData)
     json += R"(,"gecko price fetch fail":)" + String(gecko_price_fetch_fail);
     json += R"(,"gecko chart fetch":)" + String(gecko_chart_fetch);
     json += R"(,"gecko chart fetch fail":)" + String(gecko_chart_fetch_fail);
+    json += R"(,"finnhub price fetch":)" + String(finnhub_price_fetch);
+    json += R"(,"finnhub price fetch fail":)" + String(finnhub_price_fetch_fail);
+    json += R"(,"finnhub chart fetch":)" + String(finnhub_chart_fetch);
+    json += R"(,"finnhub chart fetch fail":)" + String(finnhub_chart_fetch_fail);
     json += R"(,"time fetch":)" + String(time_fetch);
     json += R"(,"time fetch fail":)" + String(time_fetch_fail);
     json += R"(,"settings change":)" + String(settings_change);
@@ -189,8 +230,10 @@ String Stats::toJson(bool withData)
     json += "}"; // counters
 
     json += R"(,"timestamps":{)";
-    json += R"("last price fetch":")" + timeFromTimestamp(last_price_fetch) + R"(")";
-    json += R"(,"last chart fetch":")" + timeFromTimestamp(last_chart_fetch) + R"(")";
+    json += R"("last gecko price fetch":")" + timeFromTimestamp(last_gecko_price_fetch) + R"(")";
+    json += R"(,"last gecko chart fetch":")" + timeFromTimestamp(last_gecko_chart_fetch) + R"(")";
+    json += R"(,"last finnhub price fetch":")" + timeFromTimestamp(last_finnhub_price_fetch) + R"(")";
+    json += R"(,"last finnhub chart fetch":")" + timeFromTimestamp(last_finnhub_chart_fetch) + R"(")";
     json += R"(,"last settings change":")" + timeFromTimestamp(last_settings_change) + R"(")";
     json += R"(,"last time fetch":")" + timeFromTimestamp(last_time_fetch) + R"(")";
     json += R"(,"last wifi got ip":")" + timeFromTimestamp(last_wifi_got_ip) + R"(")";
@@ -202,6 +245,7 @@ String Stats::toJson(bool withData)
     json += R"("task high water marks":{)";
     json += R"("displayTask":)" + String(uxTaskGetStackHighWaterMark(displayTaskHandle));
     json += R"(,"geckoTask":)" + String(uxTaskGetStackHighWaterMark(geckoTaskHandle));
+    json += R"(,"finnhubTask":)" + String(uxTaskGetStackHighWaterMark(finnhubTaskHandle));
     json += R"(,"housekeepingTask":)" + String(uxTaskGetStackHighWaterMark(housekeepingTaskHandle));
     json += R"(,"heartbeatTask":)" + String(uxTaskGetStackHighWaterMark(heartbeatTaskHandle));
     // json += R"(,"cointhingEvent":)" + String(uxTaskGetStackHighWaterMark(xTaskGetHandle("blah")));
@@ -216,15 +260,37 @@ String Stats::toJson(bool withData)
     json += "}"; // stats
 
     if (withData) {
-        json += R"(,"data":)";
+        json += R"(,"data":{)";
         json += gecko.toJson();
+        json += ",";
+        json += finnhub.toJson();
+        json += "}"; //data
 
-        if (SPIFFS.exists(SETTINGS_FILE)) {
+        json += R"(,"settings":{)";
+        bool first(false);
+        if (SPIFFS.exists(GECKO_SETTINGS_FILE)) {
             File file;
-            file = SPIFFS.open(SETTINGS_FILE, "r");
+            file = SPIFFS.open(GECKO_SETTINGS_FILE, "r");
             if (file) {
-                json += R"(,"settings":)";
+                if (first) {
+                    json += ",";
+                }
+                json += R"("gecko":)";
                 json += file.readString();
+                first = true;
+            }
+        }
+
+        if (SPIFFS.exists(FINNHUB_SETTINGS_FILE)) {
+            File file;
+            file = SPIFFS.open(FINNHUB_SETTINGS_FILE, "r");
+            if (file) {
+                if (first) {
+                    json += ",";
+                }
+                json += R"("finnhub":)";
+                json += file.readString();
+                first = true;
             }
         }
 
@@ -232,10 +298,15 @@ String Stats::toJson(bool withData)
             File file;
             file = SPIFFS.open(BRIGHTNESS_FILE, "r");
             if (file) {
-                json += R"(,"brightness":)";
+                if (first) {
+                    json += ",";
+                }
+                json += R"("brightness":)";
                 json += file.readString();
+                first = true;
             }
         }
+        json += "}"; // settings
     }
 
     json += "}"; // top level

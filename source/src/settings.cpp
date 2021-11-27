@@ -16,6 +16,8 @@ using File = fs::File;
 
 namespace cointhing {
 
+SemaphoreHandle_t settingsMutex = xSemaphoreCreateRecursiveMutex();
+
 Settings::Settings()
 {
 }
@@ -24,11 +26,12 @@ void Settings::read()
 {
     TraceFunction;
     RecursiveMutexGuard(settingsMutex);
-    if (SPIFFS.exists(SETTINGS_FILE)) {
+
+    if (SPIFFS.exists(GECKO_SETTINGS_FILE)) {
         File file;
-        file = SPIFFS.open(SETTINGS_FILE, "r");
+        file = SPIFFS.open(GECKO_SETTINGS_FILE, "r");
         if (file) {
-            TraceIPrintln("Read settings: " SETTINGS_FILE);
+            TraceIPrintln("Read settings: " GECKO_SETTINGS_FILE);
             DynamicJsonDocument doc(JSON_DOCUMENT_CONFIG_SIZE);
             ReadBufferingStream bufferedFile { file, 64 };
 
@@ -40,7 +43,7 @@ void Settings::read()
 #endif
 
             if (!error) {
-                set(doc, false);
+                setGecko(doc, false);
             } else {
                 TraceIPrint(F("deserializeJson() failed: "));
                 TraceIPrintln(error.f_str());
@@ -49,22 +52,60 @@ void Settings::read()
             file.close();
         }
     }
+
+    if (SPIFFS.exists(FINNHUB_SETTINGS_FILE)) {
+        File file;
+        file = SPIFFS.open(FINNHUB_SETTINGS_FILE, "r");
+        if (file) {
+            TraceIPrintln("Read settings: " FINNHUB_SETTINGS_FILE);
+            DynamicJsonDocument doc(JSON_DOCUMENT_CONFIG_SIZE);
+            ReadBufferingStream bufferedFile { file, 64 };
+
+#if TRACER > 1
+            ReadLoggingStream loggingStream(bufferedFile, Serial);
+            DeserializationError error = deserializeJson(doc, loggingStream);
+#else
+            DeserializationError error = deserializeJson(doc, bufferedFile);
+#endif
+
+            if (!error) {
+                setFinnhub(doc, false);
+            } else {
+                TraceIPrint(F("deserializeJson() failed: "));
+                TraceIPrintln(error.f_str());
+            }
+            // Close the file (Curiously, File's destructor doesn't close the file)
+            file.close();
+        }
+    }
+
+    stats.inc_settings_change();
+    esp_event_post_to(loopHandle, COINTHING_EVENT_BASE, eventIdSettingsChanged, (void*)__PRETTY_FUNCTION__, strlen(__PRETTY_FUNCTION__) + 1, 0);
 }
 
-void Settings::set(const char* json)
+void Settings::set(const char* json, String& savedToFile)
 {
     TraceFunction;
     DynamicJsonDocument doc(JSON_DOCUMENT_CONFIG_SIZE);
     DeserializationError error = deserializeJson(doc, json);
     if (!error) {
-        set(doc, true);
+        if (doc[F("finnhub")].as<bool>() == true) {
+            setFinnhub(doc, true);
+            savedToFile = FINNHUB_SETTINGS_FILE;
+        } else {
+            setGecko(doc, true);
+            savedToFile = GECKO_SETTINGS_FILE;
+        }
+        stats.inc_settings_change();
+        esp_event_post_to(loopHandle, COINTHING_EVENT_BASE, eventIdSettingsChanged, (void*)__PRETTY_FUNCTION__, strlen(__PRETTY_FUNCTION__) + 1, 0);
     } else {
+        savedToFile.clear();
         TraceIPrint(F("deserializeJson() failed: "));
         TraceIPrintln(error.f_str());
     }
 }
 
-void Settings::set(DynamicJsonDocument& doc, bool toFile)
+void Settings::setGecko(DynamicJsonDocument& doc, bool toFile)
 {
     TraceFunction;
     RecursiveMutexGuard(settingsMutex);
@@ -97,17 +138,15 @@ void Settings::set(DynamicJsonDocument& doc, bool toFile)
     m_gecko.m_heartbeat = doc[F("heartbeat")] | true;
 
     if (toFile) {
-        write();
+        writeGecko();
     }
-    stats.inc_settings_change();
-    esp_event_post_to(loopHandle, COINTHING_EVENT_BASE, eventIdSettingsChanged, (void*)__PRETTY_FUNCTION__, strlen(__PRETTY_FUNCTION__) + 1, 0);
 }
 
-void Settings::write() const
+void Settings::writeGecko() const
 {
     TraceFunction;
     RecursiveMutexGuard(settingsMutex);
-    File file = SPIFFS.open(SETTINGS_FILE, "w");
+    File file = SPIFFS.open(GECKO_SETTINGS_FILE, "w");
     if (file) {
         file.printf(R"({"mode":%u,)", static_cast<uint8_t>(m_gecko.m_mode));
         file.print(R"("coins":[)");
@@ -143,15 +182,50 @@ void Settings::write() const
     }
 }
 
-void Settings::deleteFile() const
+void Settings::setFinnhub(DynamicJsonDocument& doc, bool toFile)
 {
-    SPIFFS.remove(SETTINGS_FILE);
-    SPIFFS.remove(BRIGHTNESS_FILE);
+    TraceFunction;
+    RecursiveMutexGuard(settingsMutex);
+    m_finnhub.m_symbols.clear();
+    for (const char* symbol : doc[F("symbols")].as<JsonArray>()) {
+        m_finnhub.m_symbols.emplace_back(symbol);
+    }
+    m_finnhub.m_api_token = doc[F("token")] | "";
+
+    if (toFile) {
+        writeFinnhub();
+    }
 }
 
-bool Settings::valid() const
+void Settings::writeFinnhub() const
 {
-    return SPIFFS.exists(SETTINGS_FILE);
+    TraceFunction;
+    RecursiveMutexGuard(settingsMutex);
+    File file = SPIFFS.open(FINNHUB_SETTINGS_FILE, "w");
+    if (file) {
+        file.printf(R"({"finnhub":true)");
+        file.print(R"(,"symbols":[)");
+        bool once(false);
+        for (const auto& s : m_finnhub.m_symbols) {
+            if (!once) {
+                once = true;
+            } else {
+                file.print(R"(,)");
+            }
+            file.printf(R"("%s")", s.c_str());
+        }
+        file.print("]"); // symbols
+        file.printf(R"(,"token":"%s")", m_finnhub.m_api_token.c_str());
+        file.print("}"); // top level
+        file.close();
+    }
+}
+
+void Settings::deleteFile() const
+{
+    SPIFFS.remove(GECKO_SETTINGS_FILE);
+    SPIFFS.remove(FINNHUB_SETTINGS_FILE);
+    SPIFFS.remove(BRIGHTNESS_FILE);
 }
 
 void Settings::readBrightness()
@@ -267,6 +341,10 @@ uint32_t GeckoSettings::validCoinIndex(uint32_t index) const
         index = 0;
     }
     return index;
+}
+
+FinnhubSettings::FinnhubSettings()
+{
 }
 
 Settings settings;

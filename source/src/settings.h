@@ -4,11 +4,13 @@
 #include <ArduinoJson.h>
 #include <array>
 
-#define SETTINGS_FILE "/gecko.json"
+#define GECKO_SETTINGS_FILE "/gecko.json"
 #define FINNHUB_SETTINGS_FILE "/finnhub.json"
 #define BRIGHTNESS_FILE "/brightness.json"
 
 namespace cointhing {
+
+extern SemaphoreHandle_t settingsMutex;
 
 enum class ChartStyle : uint8_t {
     SIMPLE = 0,
@@ -94,29 +96,45 @@ private:
     bool m_heartbeat { true };
 };
 
+class FinnhubSettings {
+public:
+    friend class Settings;
+    FinnhubSettings();
+
+    const std::vector<String>& symbols() const { return m_symbols; }
+    const String& apiToken() const { return m_api_token; }
+
+private:
+    std::vector<String> m_symbols;
+    String m_api_token;
+};
+
 class Settings {
 public:
     Settings();
 
-    void set(const char* json);
+    void set(const char* json, String& savedToFile);
 
     void read();
-    void write() const;
     void deleteFile() const;
-
-    bool valid() const;
 
     void readBrightness();
     void setBrightness(uint8_t b);
 
     uint8_t brightness() const { return m_brightness; }
 
-    const GeckoSettings& coins() const { return m_gecko; }
+    const GeckoSettings& gecko() const { return m_gecko; }
+    const FinnhubSettings& finnhub() const { return m_finnhub; }
 
 private:
-    void set(DynamicJsonDocument& doc, bool toFile);
+    void setGecko(DynamicJsonDocument& doc, bool toFile);
+    void setFinnhub(DynamicJsonDocument& doc, bool toFile);
+
+    void writeGecko() const;
+    void writeFinnhub() const;
 
     GeckoSettings m_gecko;
+    FinnhubSettings m_finnhub;
     uint8_t m_brightness { std::numeric_limits<uint8_t>::max() };
 };
 

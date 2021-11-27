@@ -1,6 +1,7 @@
 #include "main.h"
 #include "display.h"
 #include "events.h"
+#include "finnhub.h"
 #include "gecko.h"
 #include "stats.h"
 #include "tasks.h"
@@ -14,7 +15,6 @@
 using namespace cointhing;
 
 namespace cointhing {
-SemaphoreHandle_t settingsMutex = xSemaphoreCreateRecursiveMutex();
 std::atomic_bool readyFlag;
 } // namespace cointhing
 
@@ -44,6 +44,7 @@ void setup()
     createHousekeepingTask();
 
     createGeckoTask();
+    createFinnhubTask();
     createDisplayTask();
 
     createTimers();

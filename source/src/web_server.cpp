@@ -93,8 +93,9 @@ bool handleSet(AsyncWebServerRequest* request)
         settings.setBrightness(static_cast<uint8_t>(request->arg(F("brightness")).toInt()));
         streamFile(request, BRIGHTNESS_FILE);
     } else if (request->hasArg(F("json"))) {
-        settings.set(request->arg(F("json")).c_str());
-        streamFile(request, SETTINGS_FILE);
+        String savedToFile;
+        settings.set(request->arg(F("json")).c_str(), savedToFile);
+        streamFile(request, savedToFile.c_str());
     } else {
         request->send(200, F("application/json"), F(R"({"error":"Nothing to set!"})"));
     }
