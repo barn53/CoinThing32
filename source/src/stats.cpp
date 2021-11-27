@@ -33,6 +33,7 @@ RTC_NOINIT_ATTR uint32_t Stats::wifi_sta_disconnected;
 
 RTC_NOINIT_ATTR time_t Stats::last_price_fetch;
 RTC_NOINIT_ATTR time_t Stats::last_chart_fetch;
+RTC_NOINIT_ATTR time_t Stats::last_settings_change;
 RTC_NOINIT_ATTR time_t Stats::last_time_fetch;
 RTC_NOINIT_ATTR time_t Stats::last_wifi_got_ip;
 RTC_NOINIT_ATTR time_t Stats::last_wifi_disconnect;
@@ -69,6 +70,7 @@ void Stats::reset()
 
     last_price_fetch = 0;
     last_chart_fetch = 0;
+    last_settings_change = 0;
     last_time_fetch = 0;
     last_wifi_got_ip = 0;
     last_wifi_disconnect = 0;
@@ -113,6 +115,7 @@ void Stats::inc_time_fetch_fail()
 void Stats::inc_settings_change()
 {
     RecursiveMutexGuard(stats_sync_mutex);
+    last_settings_change = localTimestamp();
     ++settings_change;
 }
 void Stats::inc_server_requests()
@@ -188,6 +191,7 @@ String Stats::toJson(bool withData)
     json += R"(,"timestamps":{)";
     json += R"("last price fetch":")" + timeFromTimestamp(last_price_fetch) + R"(")";
     json += R"(,"last chart fetch":")" + timeFromTimestamp(last_chart_fetch) + R"(")";
+    json += R"(,"last settings change":")" + timeFromTimestamp(last_settings_change) + R"(")";
     json += R"(,"last time fetch":")" + timeFromTimestamp(last_time_fetch) + R"(")";
     json += R"(,"last wifi got ip":")" + timeFromTimestamp(last_wifi_got_ip) + R"(")";
     json += R"(,"last wifi disconnect":")" + timeFromTimestamp(last_wifi_disconnect) + R"(")";

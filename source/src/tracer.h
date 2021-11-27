@@ -15,7 +15,7 @@ struct Tracer {
 
     static uint32_t depth();
 
-    void indent(bool duration);
+    void indent(bool showDuration, bool showCounter);
     void functionName(bool call);
 
     template <typename T>
@@ -65,26 +65,26 @@ extern SemaphoreHandle_t syncMutex;
 
 #define TraceIPrint(x)                                         \
     xSemaphoreTakeRecursive(Tracer::syncMutex, portMAX_DELAY); \
-    __t.indent(true);                                          \
+    __t.indent(true, true);                                    \
     __t.print(x);                                              \
     xSemaphoreGiveRecursive(Tracer::syncMutex);
 
 #define TraceIPrintln(x)                                       \
     xSemaphoreTakeRecursive(Tracer::syncMutex, portMAX_DELAY); \
-    __t.indent(true);                                          \
+    __t.indent(true, true);                                    \
     __t.print(x);                                              \
     Serial.println();                                          \
     xSemaphoreGiveRecursive(Tracer::syncMutex);
 
 #define TraceIPrintf(f, ...)                                   \
     xSemaphoreTakeRecursive(Tracer::syncMutex, portMAX_DELAY); \
-    __t.indent(true);                                          \
+    __t.indent(true, true);                                    \
     __t.printf(f, __VA_ARGS__);                                \
     xSemaphoreGiveRecursive(Tracer::syncMutex);
 
 #define TraceIPos                                                                             \
     xSemaphoreTakeRecursive(Tracer::syncMutex, portMAX_DELAY);                                \
-    __t.indent(true);                                                                         \
+    __t.indent(true, true);                                                                   \
     Serial.printf("%s [%u] @ %s:%u", __PRETTY_FUNCTION__, __t.m_counter, __FILE__, __LINE__); \
     Serial.println();                                                                         \
     xSemaphoreGiveRecursive(Tracer::syncMutex);
@@ -112,14 +112,14 @@ extern SemaphoreHandle_t syncMutex;
 #define TraceNIPrint(x)                                        \
     xSemaphoreTakeRecursive(Tracer::syncMutex, portMAX_DELAY); \
     Tracer::Tracer __t;                                        \
-    __t.indent(true);                                          \
+    __t.indent(true, true);                                    \
     __t.print(x);                                              \
     xSemaphoreGiveRecursive(Tracer::syncMutex);
 
 #define TraceNIPrintln(x)                                      \
     xSemaphoreTakeRecursive(Tracer::syncMutex, portMAX_DELAY); \
     Tracer::Tracer __t;                                        \
-    __t.indent(true);                                          \
+    __t.indent(true, true);                                    \
     __t.print(x);                                              \
     Serial.println();                                          \
     xSemaphoreGiveRecursive(Tracer::syncMutex);
@@ -127,14 +127,14 @@ extern SemaphoreHandle_t syncMutex;
 #define TraceNIPrintf(f, ...)                                  \
     xSemaphoreTakeRecursive(Tracer::syncMutex, portMAX_DELAY); \
     Tracer::Tracer __t;                                        \
-    __t.indent(true);                                          \
+    __t.indent(true, true);                                    \
     __t.printf(f, __VA_ARGS__);                                \
     xSemaphoreGiveRecursive(Tracer::syncMutex);
 
 #define TraceNIPos                                                        \
     xSemaphoreTakeRecursive(Tracer::syncMutex, portMAX_DELAY);            \
     Tracer::Tracer __t;                                                   \
-    __t.indent(true);                                                     \
+    __t.indent(true, true);                                               \
     Serial.printf("%s @ %s:%u", __PRETTY_FUNCTION__, __FILE__, __LINE__); \
     Serial.println();                                                     \
     xSemaphoreGiveRecursive(Tracer::syncMutex);

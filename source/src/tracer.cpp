@@ -17,7 +17,7 @@ Tracer::Tracer(const char* function, const char* file, uint32_t line)
     m_millis = millis();
     ++counter;
     m_counter = counter;
-    indent(false);
+    indent(false, false);
     functionName(true);
 
     auto& d(taskDepth[xTaskGetCurrentTaskHandle()]);
@@ -38,18 +38,18 @@ Tracer::~Tracer()
     if (!m_function.isEmpty()) {
         auto& d(taskDepth[xTaskGetCurrentTaskHandle()]);
         --d;
-        indent(true);
+        indent(true, false);
         functionName(false);
     }
     xSemaphoreGiveRecursive(syncMutex);
 }
 
-void Tracer::indent(bool duration)
+void Tracer::indent(bool showDuration, bool showCounter)
 {
     String prefix("{");
     prefix += String(millis() / 1000);
     prefix += "} ";
-    if (m_millis != 0 && duration) {
+    if (m_millis != 0 && showDuration) {
         prefix += "{";
         prefix += String((millis() - m_millis) / 1000);
         prefix += "} ";
@@ -66,6 +66,9 @@ void Tracer::indent(bool duration)
     auto d = depth();
     for (int i = 0; i < d; ++i) {
         Serial.print("|   ");
+    }
+    if (m_counter != 0 && showCounter) {
+        Serial.printf("[%u] ", m_counter);
     }
 }
 
