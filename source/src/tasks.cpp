@@ -26,8 +26,6 @@ void createHousekeepingTask()
                     }
                 }
 
-                TraceNIPrintln(stats.toJson(false));
-
                 ++minutes;
                 vTaskDelay(60 * 1000);
             }

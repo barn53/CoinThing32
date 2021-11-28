@@ -46,7 +46,7 @@ void Finnhub::unCancel() const
     m_cancel = false;
 }
 
-const std::map<String, Finnhub::StockPrices>& Finnhub::getPrices() const
+const std::vector<Finnhub::StockPrices>& Finnhub::getPrices() const
 {
     return m_prices;
 }
@@ -65,6 +65,7 @@ void Finnhub::fetchPrices()
 
     DynamicJsonDocument doc(192);
     size_t successful(0);
+    std::vector<StockPrices> tempPrices;
     for (const auto& symbol : m_settings.symbols()) {
         String url(F("https://finnhub.io/api/v1/quote?symbol="));
         url += symbol;
@@ -79,7 +80,6 @@ void Finnhub::fetchPrices()
                     TraceIPrintln("fetch loop cancelled");
                     return;
                 }
-                RecursiveMutexGuard(finnhubSyncMutex);
 
                 StockPrices sp;
                 sp.current = doc["c"];
@@ -90,8 +90,7 @@ void Finnhub::fetchPrices()
                 sp.openDay = doc["o"];
                 sp.closePrevious = doc["pc"];
                 sp.timestamp = doc["t"];
-
-                m_prices[symbol] = sp;
+                tempPrices.emplace_back(sp);
 
                 redo = false;
                 stats.inc_finnhub_price_fetch();
@@ -111,6 +110,8 @@ void Finnhub::fetchPrices()
     }
 
     if (successful == m_settings.symbols().size()) {
+        RecursiveMutexGuard(finnhubSyncMutex);
+        m_prices.swap(tempPrices);
         esp_event_post_to(loopHandle, COINTHING_EVENT_BASE, eventIdAllFinnhubPricesUpdated, (void*)__PRETTY_FUNCTION__, strlen(__PRETTY_FUNCTION__) + 1, 0);
     }
 }
@@ -134,16 +135,16 @@ String Finnhub::toJson() const
             json += ",";
         }
         json += R"({"symbol":")" + symbol + R"(")";
-        const auto prices(m_prices.find(symbol));
-        if (prices != m_prices.end()) {
-            json += R"(,"current price $":)" + String(prices->second.current);
-            json += R"(,"change $":)" + String(prices->second.change);
-            json += R"(,"change $ %":)" + String(prices->second.percentChange);
-            json += R"(,"high price of day $":)" + String(prices->second.highDay);
-            json += R"(,"low price of day $":)" + String(prices->second.lowDay);
-            json += R"(,"open price of day $":)" + String(prices->second.openDay);
-            json += R"(,"previous close price $":)" + String(prices->second.closePrevious);
-            json += R"(,"time":")" + timeFromTimestamp(prices->second.timestamp) + R"(")";
+        if (m_prices.size() > counter) {
+            const auto prices(m_prices[counter]);
+            json += R"(,"current price $":)" + String(prices.current);
+            json += R"(,"change $":)" + String(prices.change);
+            json += R"(,"change $ %":)" + String(prices.percentChange);
+            json += R"(,"high price of day $":)" + String(prices.highDay);
+            json += R"(,"low price of day $":)" + String(prices.lowDay);
+            json += R"(,"open price of day $":)" + String(prices.openDay);
+            json += R"(,"previous close price $":)" + String(prices.closePrevious);
+            json += R"(,"time":")" + timeFromTimestamp(prices.timestamp) + R"(")";
         }
         json += "}"; // symbol
         ++counter;

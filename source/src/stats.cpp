@@ -12,6 +12,10 @@ using File = fs::File;
 
 namespace cointhing {
 
+TaskHandle_t tmrSvcTaskHandle = nullptr;
+TaskHandle_t asyncTcpTaskHandle = nullptr;
+TaskHandle_t cointhingEventTaskHandle = nullptr;
+
 String Stats::timezone;
 time_t Stats::utc_time_start;
 uint32_t Stats::raw_offset;
@@ -243,12 +247,27 @@ String Stats::toJson(bool withData)
     json += R"(,"memory":{)";
 
     json += R"("task high water marks":{)";
-    json += R"("displayTask":)" + String(uxTaskGetStackHighWaterMark(displayTaskHandle));
-    json += R"(,"geckoTask":)" + String(uxTaskGetStackHighWaterMark(geckoTaskHandle));
-    json += R"(,"finnhubTask":)" + String(uxTaskGetStackHighWaterMark(finnhubTaskHandle));
-    json += R"(,"housekeepingTask":)" + String(uxTaskGetStackHighWaterMark(housekeepingTaskHandle));
-    json += R"(,"heartbeatTask":)" + String(uxTaskGetStackHighWaterMark(heartbeatTaskHandle));
-    // json += R"(,"cointhingEvent":)" + String(uxTaskGetStackHighWaterMark(xTaskGetHandle("blah")));
+    json += R"(")" + String(pcTaskGetTaskName(displayTaskHandle)) + R"(":)" + String(uxTaskGetStackHighWaterMark(displayTaskHandle));
+    json += R"(,")" + String(pcTaskGetTaskName(geckoTaskHandle)) + R"(":)" + String(uxTaskGetStackHighWaterMark(geckoTaskHandle));
+    json += R"(,")" + String(pcTaskGetTaskName(finnhubTaskHandle)) + R"(":)" + String(uxTaskGetStackHighWaterMark(finnhubTaskHandle));
+    json += R"(,")" + String(pcTaskGetTaskName(housekeepingTaskHandle)) + R"(":)" + String(uxTaskGetStackHighWaterMark(housekeepingTaskHandle));
+    json += R"(,")" + String(pcTaskGetTaskName(heartbeatTaskHandle)) + R"(":)" + String(uxTaskGetStackHighWaterMark(heartbeatTaskHandle));
+
+#if 0 // Hmpf xTaskGetHandle() not available!
+    if (tmrSvcTaskHandle == nullptr) {
+        tmrSvcTaskHandle = xTaskGetHandle("Tmr Svc");
+        json += R"(")" + String(pcTaskGetTaskName(tmrSvcTaskHandle)) + R"(":)" + String(uxTaskGetStackHighWaterMark(tmrSvcTaskHandle));
+    }
+    if (asyncTcpTaskHandle == nullptr) {
+        asyncTcpTaskHandle = xTaskGetHandle("async_tcp");
+        json += R"(")" + String(pcTaskGetTaskName(asyncTcpTaskHandle)) + R"(":)" + String(uxTaskGetStackHighWaterMark(asyncTcpTaskHandle));
+    }
+    if (cointhingEventTaskHandle == nullptr) {
+        cointhingEventTaskHandle = xTaskGetHandle("cointhingEvent");
+        json += R"(")" + String(pcTaskGetTaskName(cointhingEventTaskHandle)) + R"(":)" + String(uxTaskGetStackHighWaterMark(cointhingEventTaskHandle));
+    }
+#endif
+
     json += "}"; // task high water marks
 
     json += R"(,"heap":{)";

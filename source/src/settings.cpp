@@ -347,6 +347,19 @@ FinnhubSettings::FinnhubSettings()
 {
 }
 
+uint32_t FinnhubSettings::validSymbolIndex(uint32_t index) const
+{
+    if (index >= m_symbols.size()) {
+        index = 0;
+    }
+    return index;
+}
+
+const String& FinnhubSettings::symbol(uint32_t index) const
+{
+    return m_symbols[validSymbolIndex(index)];
+}
+
 Settings settings;
 
 } // namespace cointhing

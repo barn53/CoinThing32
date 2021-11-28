@@ -101,10 +101,14 @@ public:
     friend class Settings;
     FinnhubSettings();
 
+    const String& symbol(uint32_t index) const;
+
     const std::vector<String>& symbols() const { return m_symbols; }
     const String& apiToken() const { return m_api_token; }
 
 private:
+    uint32_t validSymbolIndex(uint32_t index) const;
+
     std::vector<String> m_symbols;
     String m_api_token;
 };

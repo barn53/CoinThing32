@@ -14,8 +14,6 @@ void createTimers()
 
     TimerHandle_t fetchGeckoPriceTimer(xTimerCreate("fetchGeckoPriceTimer", (20 * 1000) / portTICK_PERIOD_MS, pdTRUE, nullptr, [](TimerHandle_t xTimer) {
         if (readyFlag) {
-            TraceFunction;
-            TraceIPrintf("Gecko queue free spaces:   %u\n", uxQueueSpacesAvailable(geckoQueue));
             GeckoRemit type(GeckoRemit::fetchPrices);
             xQueueSend(geckoQueue, static_cast<void*>(&type), 0);
         }
@@ -24,8 +22,6 @@ void createTimers()
 
     TimerHandle_t fetchGeckoChartTimer(xTimerCreate("fetchGeckoChartTimer", (15 * 60 * 1000) / portTICK_PERIOD_MS, pdTRUE, nullptr, [](TimerHandle_t xTimer) {
         if (readyFlag) {
-            TraceFunction;
-            TraceIPrintf("Gecko queue free spaces:   %u\n", uxQueueSpacesAvailable(geckoQueue));
             GeckoRemit type(GeckoRemit::fetchCharts);
             xQueueSend(geckoQueue, static_cast<void*>(&type), 0);
         }
@@ -34,8 +30,6 @@ void createTimers()
 
     TimerHandle_t fetchFinnhubPriceTimer(xTimerCreate("fetchFinnhubPriceTimer", (20 * 1000) / portTICK_PERIOD_MS, pdTRUE, nullptr, [](TimerHandle_t xTimer) {
         if (readyFlag) {
-            TraceFunction;
-            TraceIPrintf("Finnhub queue free spaces: %u\n", uxQueueSpacesAvailable(finnhubQueue));
             FinnhubRemit type(FinnhubRemit::fetchPrices);
             xQueueSend(finnhubQueue, static_cast<void*>(&type), 0);
         }
@@ -44,8 +38,6 @@ void createTimers()
 
     TimerHandle_t fetchFinnhubChartTimer(xTimerCreate("fetchFinnhubChartTimer", (15 * 60 * 1000) / portTICK_PERIOD_MS, pdTRUE, nullptr, [](TimerHandle_t xTimer) {
         if (readyFlag) {
-            TraceFunction;
-            TraceIPrintf("Finnhub queue free spaces: %u\n", uxQueueSpacesAvailable(finnhubQueue));
             FinnhubRemit type(FinnhubRemit::fetchCharts);
             xQueueSend(finnhubQueue, static_cast<void*>(&type), 0);
         }

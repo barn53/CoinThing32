@@ -2,3 +2,6 @@
 !.gitignore
 !*.md
 !*.bat
+
+!server/*
+server/node_modules

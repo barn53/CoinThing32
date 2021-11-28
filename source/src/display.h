@@ -8,22 +8,41 @@ enum class DisplayNotificationType : uint32_t {
     showNextId,
 };
 
+enum class DisplayCategory : uint32_t {
+    None,
+    Gecko,
+    Finnhub,
+};
+
+enum class DisplayShown : uint32_t {
+    NewSettings,
+    Nothing,
+    Gecko,
+    Finnhub,
+};
+
 class Display {
 public:
     Display();
 
-    void resetCoinId();
-    void nextCoinId();
+    void resetIds();
+    void nextId();
 
     void begin() const;
-    void clear() const;
 
     void show() const;
     void showNewSettings() const;
 
 private:
-    uint32_t m_display_coin_index;
-    mutable bool m_clear_on_show { false };
+    void showGecko() const;
+    void showFinnhub() const;
+    void showNothing() const;
+
+    uint32_t m_display_gecko_index;
+    uint32_t m_display_finnhub_index;
+    DisplayCategory m_display_category;
+    mutable DisplayShown m_last_shown;
+    static SemaphoreHandle_t m_tft_sync_mutex;
 };
 
 extern TFT_eSPI tft;

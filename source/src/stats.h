@@ -4,6 +4,10 @@
 
 namespace cointhing {
 
+extern TaskHandle_t tmrSvcTaskHandle;
+extern TaskHandle_t asyncTcpTaskHandle;
+extern TaskHandle_t cointhingEventTaskHandle;
+
 class Stats {
 public:
     static String toJson(bool withData);
@@ -46,6 +50,8 @@ public:
     static time_t get_last_time_fetch() { return last_time_fetch; }
     static time_t get_last_wifi_got_ip() { return last_wifi_got_ip; }
     static time_t get_last_wifi_disconnect() { return last_wifi_disconnect; }
+    
+    static uint32_t get_crash_counter() { return crash_counter; }
 
 private:
     // time

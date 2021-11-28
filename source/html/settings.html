@@ -54,6 +54,22 @@
         </div>
     </div>
 
+    <div class="modal fade" id="ok_modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-success">
+                    <h5 class="modal-title " id="ok_modalLabel">OK</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body text-danger">
+                    <span id="ok_text"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="container-fluid text-center">
         <div class="row content">
             <div class="col-sm-2 sidenav">
@@ -61,17 +77,19 @@
             <div class="col-sm-7 text-left">
                 <nav>
                     <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                        <a class="nav-link active" id="nav-1-tab" data-toggle="tab" href="#nav-1" role="tab"
-                            aria-controls="nav-1" aria-selected="true">One Coin</a>
+                        <a class="nav-link" id="nav-1-tab" data-toggle="tab" href="#nav-1" role="tab"
+                            aria-controls="nav-1" aria-selected="false">One Coin</a>
                         <a class="nav-link" id="nav-2-tab" data-toggle="tab" href="#nav-2" role="tab"
-                            aria-controls="nav-2" aria-selected="true">Two Coins</a>
+                            aria-controls="nav-2" aria-selected="false">Two Coins</a>
                         <a class="nav-link" id="nav-n-tab" data-toggle="tab" href="#nav-n" role="tab"
                             aria-controls="nav-n" aria-selected="false">Multiple Coins</a>
+                        <a class="nav-link active" id="nav-finnhub-tab" data-toggle="tab" href="#nav-finnhub" role="tab"
+                            aria-controls="nav-finnhub" aria-selected="false">Stocks</a>
                     </div>
                 </nav>
                 <form class="tab-content" id="nav-tabContent">
                     <p> </p>
-                    <div class="tab-pane fade show active" id="nav-1" role="tabpanel" aria-labelledby="nav-1-tab">
+                    <div class="tab-pane fade" id="nav-1" role="tabpanel" aria-labelledby="nav-1-tab">
                         <div class="form-group">
                             <div><label for="coin0"><b>Coin ID or symbol (e.g. bitcoin, btc)</b></label></div>
                             <div class="input-group" style="width:100%;">
@@ -259,6 +277,8 @@
 
                         <div class="form-group">
                             <button type="button" class="btn btn-info btn-sm" id="top10">Get Top 10</button>
+                            <span style="width:100px"></span>
+                            <button type="button" class="btn btn-info btn-sm" id="validateCoins">Validate Coins</button>
                         </div>
 
                         <div class="form-group">
@@ -273,28 +293,6 @@
                                     placeholder="2nd Currency">
                                 <div class="input-group-append">
                                     <span id="currency1clear-n" class="input-group-text clearbutton">&times;</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label><b>Coin Swap Interval</b></label>
-                            <div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="si-n" id="si_0-n" value="0">
-                                    <label class="form-check-label" for="si_0-n">10 sec</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="si-n" id="si_1-n" value="1">
-                                    <label class="form-check-label" for="si_1-n">30 sec</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="si-n" id="si_2-n" value="2">
-                                    <label class="form-check-label" for="si_2-n">1 min</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="si-n" id="si_3-n" value="3">
-                                    <label class="form-check-label" for="si_3-n">5 min</label>
                                 </div>
                             </div>
                         </div>
@@ -336,6 +334,149 @@
                                     <input class="form-check-input" type="radio" name="cs-n" id="cs_2-n" value="2">
                                     <label class="form-check-label" for="cs_2-n">High Low First Last</label>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade show active" id="nav-finnhub" role="tabpanel"
+                        aria-labelledby="nav-finnhub-tab">
+                        <div class="form-group">
+                            <div><label for="coin0-finnhub"><b>Stock symbol (e.g. AAPL, MSFT)</b></label></div>
+                            <div class="input-group">
+                                <input type="text" class="form-control enterapply" id="stock0-finnhub"
+                                    placeholder="1st Stock">
+                                <div class="input-group-append">
+                                    <span id="stock0clear-finnhub" class="input-group-text clearbutton">&times;</span>
+                                </div>
+                                <input type="text" class="form-control enterapply" id="stock1-finnhub"
+                                    placeholder="2nd Stock">
+                                <div class="input-group-append">
+                                    <span id="stock1clear-finnhub" class="input-group-text clearbutton">&times;</span>
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <input type="text" class="form-control enterapply" id="stock2-finnhub"
+                                    placeholder="3rd Stock">
+                                <div class="input-group-append">
+                                    <span id="stock2clear-finnhub" class="input-group-text clearbutton">&times;</span>
+                                </div>
+                                <input type="text" class="form-control enterapply" id="stock3-finnhub"
+                                    placeholder="4th Stock">
+                                <div class="input-group-append">
+                                    <span id="stock3clear-finnhub" class="input-group-text clearbutton">&times;</span>
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <input type="text" class="form-control enterapply" id="stock4-finnhub"
+                                    placeholder="5th Stock">
+                                <div class="input-group-append">
+                                    <span id="stock4clear-finnhub" class="input-group-text clearbutton">&times;</span>
+                                </div>
+                                <input type="text" class="form-control enterapply" id="stock5-finnhub"
+                                    placeholder="6th Stock">
+                                <div class="input-group-append">
+                                    <span id="stock5clear-finnhub" class="input-group-text clearbutton">&times;</span>
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <input type="text" class="form-control enterapply" id="stock6-finnhub"
+                                    placeholder="7th Stock">
+                                <div class="input-group-append">
+                                    <span id="stock6clear-finnhub" class="input-group-text clearbutton">&times;</span>
+                                </div>
+                                <input type="text" class="form-control enterapply" id="stock7-finnhub"
+                                    placeholder="8th Stock">
+                                <div class="input-group-append">
+                                    <span id="stock7clear-finnhub" class="input-group-text clearbutton">&times;</span>
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <input type="text" class="form-control enterapply" id="stock8-finnhub"
+                                    placeholder="9th Stock">
+                                <div class="input-group-append">
+                                    <span id="stock8clear-finnhub" class="input-group-text clearbutton">&times;</span>
+                                </div>
+                                <input type="text" class="form-control enterapply" id="stock9-finnhub"
+                                    placeholder="10th Stock">
+                                <div class="input-group-append">
+                                    <span id="stock9clear-finnhub" class="input-group-text clearbutton">&times;</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="button" class="btn btn-info btn-sm" id="validateStocks">Validate Stock
+                                Symbols</button>
+                        </div>
+
+                        <div class="form-group">
+                            <label><b>Finnhub API Token</b></label>
+                            <div class="input-group">
+                                <input type="text" class="form-control enterapply" id="finnhub-token"
+                                    placeholder="API Token">
+                                <div class="input-group-append">
+                                    <span id="finnhubclear-token" class="input-group-text clearbutton">&times;</span>
+                                </div>
+                                <div class="input-group-append">
+                                    <span id="finnhub-validate-token" class="input-group-text">Validate</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label><b>Chart Period</b></label>
+                            <div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="cp-finnhub" id="cp_1-finnhub"
+                                        value="1">
+                                    <label class="form-check-label" for="cp_1-finnhub">3 h</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="cp-finnhub" id="cp_2-finnhub"
+                                        value="2">
+                                    <label class="form-check-label" for="cp_2-finnhub">24 h</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="cp-finnhub" id="cp_4-finnhub"
+                                        value="4">
+                                    <label class="form-check-label" for="cp_4-finnhub">7 d</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="cp-finnhub" id="cp_8-finnhub"
+                                        value="8">
+                                    <label class="form-check-label" for="cp_8-finnhub">30 d</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="cp-finnhub" id="cp_16-finnhub"
+                                        value="16">
+                                    <label class="form-check-label" for="cp_16-finnhub">1 y</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label><b>Display Duration</b></label>
+                        <div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="si-n" id="si_0-n" value="0">
+                                <label class="form-check-label" for="si_0-n">10 sec</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="si-n" id="si_1-n" value="1">
+                                <label class="form-check-label" for="si_1-n">30 sec</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="si-n" id="si_2-n" value="2">
+                                <label class="form-check-label" for="si_2-n">1 min</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="si-n" id="si_3-n" value="3">
+                                <label class="form-check-label" for="si_3-n">5 min</label>
                             </div>
                         </div>
                     </div>
@@ -538,6 +679,12 @@
             applyBusy(false)
         }
 
+        function showOK(text) {
+            $("#ok_text").empty().append(text)
+            $('#ok_modal').modal({})
+            applyBusy(false)
+        }
+
         function checkFailed(e) {
             showError(e.responseText)
         }
@@ -582,6 +729,60 @@
                 myCoin.symbol = myCoin.symbol.toUpperCase()
             }
             return myCoin
+        }
+
+        function checkCoins() {
+            if (!checkCoin($("#coin0-n").val(), true)
+                || !checkCoin($("#coin1-n").val(), true)
+                || !checkCoin($("#coin2-n").val(), true)
+                || !checkCoin($("#coin3-n").val(), true)
+                || !checkCoin($("#coin4-n").val(), true)
+                || !checkCoin($("#coin5-n").val(), true)
+                || !checkCoin($("#coin6-n").val(), true)
+                || !checkCoin($("#coin7-n").val(), true)
+                || !checkCoin($("#coin8-n").val(), true)
+                || !checkCoin($("#coin9-n").val(), true)) {
+                return false
+            }
+            if ($("#coin0-n").val().length == 0
+                && $("#coin1-n").val().length == 0
+                && $("#coin2-n").val().length == 0
+                && $("#coin3-n").val().length == 0
+                && $("#coin4-n").val().length == 0
+                && $("#coin5-n").val().length == 0
+                && $("#coin6-n").val().length == 0
+                && $("#coin7-n").val().length == 0
+                && $("#coin8-n").val().length == 0
+                && $("#coin9-n").val().length == 0) {
+                showError("All coins are empty!")
+                return false
+            }
+            return true
+        }
+
+        function validateCoins() {
+            trimAll()
+            if (checkCoins()) {
+                if ($("#coin0-n").val().length > 0) { $("#coin0-n").val(getCoinInfo($("#coin0-n").val()).name) }
+                if ($("#coin1-n").val().length > 0) { $("#coin1-n").val(getCoinInfo($("#coin1-n").val()).name) }
+                if ($("#coin2-n").val().length > 0) { $("#coin2-n").val(getCoinInfo($("#coin2-n").val()).name) }
+                if ($("#coin3-n").val().length > 0) { $("#coin3-n").val(getCoinInfo($("#coin3-n").val()).name) }
+                if ($("#coin4-n").val().length > 0) { $("#coin4-n").val(getCoinInfo($("#coin4-n").val()).name) }
+                if ($("#coin5-n").val().length > 0) { $("#coin5-n").val(getCoinInfo($("#coin5-n").val()).name) }
+                if ($("#coin6-n").val().length > 0) { $("#coin6-n").val(getCoinInfo($("#coin6-n").val()).name) }
+                if ($("#coin7-n").val().length > 0) { $("#coin7-n").val(getCoinInfo($("#coin7-n").val()).name) }
+                if ($("#coin8-n").val().length > 0) { $("#coin8-n").val(getCoinInfo($("#coin8-n").val()).name) }
+                if ($("#coin9-n").val().length > 0) { $("#coin9-n").val(getCoinInfo($("#coin9-n").val()).name) }
+                showOK("All Coins OK!")
+            }
+        }
+
+        function validateAPIToken() {
+            $.get("https://finnhub.io/api/v1/quote?symbol=AAPL&token=" + $("#finnhub-token").val(), function (data) {
+                showOK("API key valid")
+            }).fail(function (error) {
+                showError(": " + error.responseJSON["error"])
+            })
         }
 
         function checkCurrency(currency, allowEmpty) {
@@ -735,17 +936,12 @@
             if ($("#nav-n").hasClass('active')) {
                 settings.mode = 3
 
-                if (!checkCoin($("#coin0-n").val())
-                    || !checkCoin($("#coin1-n").val(), true)
-                    || !checkCoin($("#coin2-n").val(), true)
-                    || !checkCoin($("#coin3-n").val(), true)
-                    || !checkCoin($("#coin4-n").val(), true)
-                    || !checkCoin($("#coin5-n").val(), true)
-                    || !checkCoin($("#coin6-n").val(), true)
-                    || !checkCoin($("#coin7-n").val(), true)
-                    || !checkCoin($("#coin8-n").val(), true)
-                    || !checkCoin($("#coin9-n").val(), true)
-                    || !checkCurrency($("#currency0-n").val(), false)
+
+                if (!checkCoins()) {
+                    return
+                }
+
+                if (!checkCurrency($("#currency0-n").val(), false)
                     || !checkCurrency($("#currency1-n").val(), true)) {
                     return
                 }
@@ -985,7 +1181,8 @@
             })
 
             $('#apply').click(clickApply)
-
+            $("#validateCoins").click(validateCoins)
+            $("#finnhub-validate-token").click(validateAPIToken)
             $("#top10").click(loadTop10)
 
             $(".enterapply").on('keyup', function (e) {

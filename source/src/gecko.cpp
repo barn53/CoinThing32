@@ -16,11 +16,6 @@ Gecko::Gecko()
 {
 }
 
-bool Gecko::valid() const
-{
-    return !m_prices.empty();
-}
-
 void Gecko::newSettings()
 {
     TraceFunction;

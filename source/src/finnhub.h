@@ -31,7 +31,7 @@ public:
     void fetchCharts();
     bool valid() const;
 
-    const std::map<String, StockPrices>& getPrices() const;
+    const std::vector<StockPrices>& getPrices() const;
     const std::map<String, std::vector<float>>& getChartData() const;
 
     void newSettings();
@@ -45,7 +45,7 @@ public:
 private:
     // These settings, prices and chart data are in sync by finnhubSyncMutex
     FinnhubSettings m_settings;
-    std::map<String, StockPrices> m_prices;
+    std::vector<StockPrices> m_prices;
     std::map<String, std::vector<float>> m_chart_data;
 
     mutable std::atomic_bool m_cancel { false };
