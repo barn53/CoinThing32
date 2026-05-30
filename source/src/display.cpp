@@ -143,6 +143,15 @@ void Display::showGecko() const
     tft.setCursor(0, msgY);
     msg = "charts: ";
     msg += gecko.getChartData().size();
+
+    uint32_t numEntries(0);
+    for (const auto& cd : gecko.getChartData()) {
+        numEntries += cd.second.size();
+    }
+    msg += " (";
+    msg += numEntries;
+    msg += ")";
+
     tft.fillRect(tft.textWidth(msg) - 5, msgY, TFT_WIDTH - (tft.textWidth(msg) - 5), 20, TFT_BLACK);
     tft.print(msg);
 

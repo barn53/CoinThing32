@@ -110,7 +110,7 @@ void Gecko::fetchCharts()
     TraceFunction;
     DynamicJsonDocument filter(16);
     filter["prices"] = true;
-    DynamicJsonDocument doc(12288);
+    DynamicJsonDocument doc(24576);
     String currency1(m_settings.currency1Lower());
     size_t successful(0);
     for (const auto& coin : m_settings.coins()) {
@@ -118,13 +118,13 @@ void Gecko::fetchCharts()
         url += coin.id;
         url += F("/market_chart?vs_currency=");
         url += currency1;
-        url += F("&days=24&interval=daily");
+        url += F("&days=365&interval=daily");
         TraceIPrintln(url);
 
         bool redo(true);
         do {
             if (httpJson.read(url.c_str(), doc)) {
-                if (m_cancel) {
+                if (m_cancel) {     
                     TraceIPrintln("fetch loop cancelled");
                     return;
                 }

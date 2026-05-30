@@ -25,14 +25,14 @@
         integrity="sha512-3q8fi8M0VS+X/3n64Ndpp6Bit7oXSiyCnzmlx6IDBLGlY5euFySyJ46RUlqIVs0DPCGOypqP8IRk/EyPvU28mQ=="
         crossorigin="anonymous" />
     <link rel="stylesheet" href="style.css">
-    <title>CoinThing Settings</title>
+    <title>CoinThing32 Settings</title>
 </head>
 
 <body>
 
     <div class="jumbotron xxjumbotron-fluid">
         <div class="container">
-            <h1>CoinThing</h1>
+            <h1>CoinThing32</h1>
             <p class="lead">Settings</p>
         </div>
     </div>
@@ -276,6 +276,8 @@
                         </div>
 
                         <div class="form-group">
+                            <button type="button" class="btn btn-info btn-sm" id="trending">Get Trending</button>
+                            <span style="width:100px"></span>
                             <button type="button" class="btn btn-info btn-sm" id="top10">Get Top 10</button>
                             <span style="width:100px"></span>
                             <button type="button" class="btn btn-info btn-sm" id="validateCoins">Validate Coins</button>
@@ -1120,6 +1122,37 @@
             { "currency": "XAU", "symbol": "XAU" } // Philadelphia Gold and Silver Index
         ]
 
+        function setDeafults() {
+            if ($("#currency0-n").val().length == 0) {
+                $("#currency0-n").valEvent("EUR")
+            }
+            if ($("#currency1-n").val().length == 0) {
+                $("#currency1-n").valEvent("USD")
+            }
+
+            try {
+                $("#si_0-n")[0].checked = true
+            } catch (error) { }
+
+            try {
+                $("#cp_4-n")[0].checked = true
+            } catch (error) { }
+
+            try {
+                $("#cs_0-n")[0].checked = true
+            } catch (error) { }
+
+            try {
+                $("#nf_1")[0].checked = true
+            } catch (error) { }
+
+            try {
+                $("#nf_1")[0].checked = true
+            } catch (error) { }
+
+            $("#heartbeat")[0].checked = true
+        }
+
         function loadTop10() {
             $.get("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1&sparkline=false", function (data) {
                 index = 0
@@ -1127,35 +1160,21 @@
                     $("#coin" + index + "-n").valEvent(element.name)
                     index++
                 });
-                if ($("#currency0-n").val().length == 0) {
-                    $("#currency0-n").valEvent("EUR")
+                setDeafults()
+            })
+        }
+
+        function loadTrending() {
+            $.get("https://api.coingecko.com/api/v3/search/trending", function (data) {
+                for (index = 0; index < 10; ++index) {
+                    $("#coin" + index + "-n").val("")
                 }
-                if ($("#currency1-n").val().length == 0) {
-                    $("#currency1-n").valEvent("USD")
-                }
-
-                try {
-                    $("#si_0-n")[0].checked = true
-                } catch (error) { }
-
-                try {
-                    $("#cp_4-n")[0].checked = true
-                } catch (error) { }
-
-                try {
-                    $("#cs_0-n")[0].checked = true
-                } catch (error) { }
-
-                try {
-                    $("#nf_1")[0].checked = true
-                } catch (error) { }
-
-                try {
-                    $("#nf_1")[0].checked = true
-                } catch (error) { }
-
-                $("#heartbeat")[0].checked = true
-
+                index = 0
+                data.coins.forEach(element => {
+                    $("#coin" + index + "-n").valEvent(element.item.id)
+                    index++
+                });
+                setDefaults()
             })
         }
 
@@ -1184,6 +1203,7 @@
             $("#validateCoins").click(validateCoins)
             $("#finnhub-validate-token").click(validateAPIToken)
             $("#top10").click(loadTop10)
+            $("#trending").click(loadTrending)
 
             $(".enterapply").on('keyup', function (e) {
                 if (event.keyCode === 13) {
